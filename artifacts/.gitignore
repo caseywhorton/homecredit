@@ -1,0 +1,6 @@
+/preprocessor.pkl
+# Ignore all files in artifacts by default
+*
+
+# But allow DVC metafiles (.dvc) to be tracked
+!.gitignore
