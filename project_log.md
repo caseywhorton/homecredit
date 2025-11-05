@@ -19,3 +19,9 @@ Will look at the NaN in the dataset again and clean it further.
 Looked at decision trees - overfitting or underfitting.  
 Used a random forest on 3 input features, underfitting.  
 Added a vibe-coded SHAP value section, still evaluating.
+
+## Date: 2025-11-04
+
+Reperformed SHAP value section  
+Saved new preprocessing artifact  
+Saved model artifact  
