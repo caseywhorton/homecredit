@@ -25,3 +25,9 @@ Added a vibe-coded SHAP value section, still evaluating.
 Reperformed SHAP value section  
 Saved new preprocessing artifact  
 Saved model artifact  
+
+## Date: 2025-11-05
+
+Pushed dvc tracked files to dagshub
+Read about the tracking  
+Added a preprocessing.py file under a utils directory
