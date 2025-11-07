@@ -31,3 +31,8 @@ Saved model artifact
 Pushed dvc tracked files to dagshub
 Read about the tracking  
 Added a preprocessing.py file under a utils directory
+
+## Date: 2025-11-06
+
+Adding more functions to the utils directory.  
+Researched next move to ML flow after running a flow.  
