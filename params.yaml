@@ -1,6 +1,6 @@
 # Filepaths
 filepath:
-  source_data: ../home-credit-default-risk/application_train.csv  # Relative to project root
+  source_data: home-credit-default-risk/application_train.csv  # Relative to project root
   model_sink: ../artifacts/model_classifier.pkl
   preprocessor_sink: ../artifacts/preprocessor.pkl  # Add this
 
