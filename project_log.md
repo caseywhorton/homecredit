@@ -37,8 +37,9 @@ Added a preprocessing.py file under a utils directory
 Adding more functions to the utils directory.  
 Researched next move to ML flow after running a flow.  
 
-## Date: 2025-11-10  (45 minutes)
+## Date: 2025-11-10  (120 minutes)
 
 Added a training module.  
 Added a parameters YAML file to parameterize training.  
 Retrained model with same parameters and pushed changes to DVC.  
+Converted flow to MLFlow.
