@@ -94,7 +94,7 @@ def main():
     print('='*60 + '\n')
 
     # Read data from source
-    print(f"📂 Loading data from: {params['filepath']['source_data']}")
+    print(f"Loading data from: {params['filepath']['source_data']}")
     data_path = Path(__file__).parent.parent / params['filepath']['source_data']
     df = pd.read_csv(data_path)
     print(f"   Shape: {df.shape}")
