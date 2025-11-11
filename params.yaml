@@ -1,0 +1,28 @@
+# Filepaths
+filepath:
+  source_data: ../home-credit-default-risk/application_train.csv  # Relative to project root
+  model_sink: ../artifacts/model_classifier.pkl
+  preprocessor_sink: ../artifacts/preprocessor.pkl  # Add this
+
+# Model hyperparameters
+model:
+  n_estimators: 40
+  max_depth: 10
+  class_weight: balanced
+  random_state: 42
+
+# Data split
+train:
+  test_size: 0.2
+  random_state: 101
+  stratify: true  # Add this - important for imbalanced data
+
+# Features
+features:
+  numeric:
+    - AMT_ANNUITY
+    - AMT_INCOME_TOTAL
+    - AMT_CREDIT
+  # categorical:  # Uncomment when you add categorical features
+  #   - OCCUPATION_TYPE
+  #   - NAME_EDUCATION_TYPE

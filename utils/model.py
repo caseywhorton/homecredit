@@ -17,7 +17,11 @@ def create_model(preprocessor, **model_params):
 
 def save_model(model, path):
     """Save trained model"""
-    joblib.dump(model, path)
+    try:
+        joblib.dump(model, path)
+        print(f'model saved to {path}')
+    except Exception as e:
+        print(f'Error saving model: {e}')
 
 
 def load_model(path):
