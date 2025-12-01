@@ -23,6 +23,8 @@ features:
     - AMT_ANNUITY
     - AMT_INCOME_TOTAL
     - AMT_CREDIT
+    - AMT_GOODS_PRICE
+    - YEARS_EMPLOYED
   # categorical:  # Uncomment when you add categorical features
   #   - OCCUPATION_TYPE
   #   - NAME_EDUCATION_TYPE
