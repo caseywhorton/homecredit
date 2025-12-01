@@ -4,6 +4,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 import pandas as pd
+import numpy as np
 from typing import Tuple, List
 
 
@@ -15,7 +16,7 @@ def prepare_data(
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Preprocesses dataframe for model fitting"""
 
-    # clean the dataframe
+    # clean the dataframe and add transformed features
     data_with_features = gen_features(df)
 
     # Split into train/test
@@ -158,5 +159,8 @@ def gen_features(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     df['AMT_REQ_CREDIT_BUREAU_YEAR_BKT'] = df['AMT_REQ_CREDIT_BUREAU_YEAR_BKT'].cat.add_categories('Unknown').fillna('Unknown')
+
+    # Take the natural log of 
+    df['AMT_GOODS_PRICE'] = np.log(df['AMT_GOODS_PRICE'])
 
     return df
