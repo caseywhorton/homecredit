@@ -8,9 +8,9 @@ from typing import Tuple, List
 
 
 def prepare_data(
-    df: pd.DataFrame, 
-    numeric_features: List[str], 
-    target: str = "TARGET", 
+    df: pd.DataFrame,
+    numeric_features: List[str],
+    target: str = "TARGET",
     test_prop: float = 0.20
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Preprocesses dataframe for model fitting"""
