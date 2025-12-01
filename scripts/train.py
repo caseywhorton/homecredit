@@ -20,7 +20,7 @@ with open(params_path, 'r') as f:
     params = yaml.safe_load(f)
 
 numeric_features = params['features']['numeric']
-experiment_name = "homecredit-default-11102025-v2"
+experiment_name = "homecredit-default-11102025-v3"
 
 
 def train_with_mlflow(
