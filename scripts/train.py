@@ -20,8 +20,8 @@ with open(params_path, 'r') as f:
     params = yaml.safe_load(f)
 
 numeric_features = params['features']['numeric']
+categorical_features = params['features']['categorical']
 experiment_name = "homecredit-default-11102025-v3"
-
 
 def train_with_mlflow(
     X_train,
@@ -101,12 +101,12 @@ def main():
 
     # Extract features and create train/test split
     print("\nPreparing data...")
-    X_train, X_test, y_train, y_test = prepare_data(df, numeric_features)
+    X_train, X_test, y_train, y_test = prepare_data(df)
     print(f"   Train: {X_train.shape}, Test: {X_test.shape}")
 
     # Get the preprocessor
     print("\nCreating preprocessor...")
-    preprocessor = get_preprocessor(numeric_features)
+    preprocessor = get_preprocessor(numeric_features, categorical_features)
 
     # Train the model
     print("\nTraining model with MLflow...")

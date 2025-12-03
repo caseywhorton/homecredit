@@ -1,8 +1,9 @@
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
+
 import pandas as pd
 import numpy as np
 from typing import Tuple, List
@@ -10,7 +11,6 @@ from typing import Tuple, List
 
 def prepare_data(
     df: pd.DataFrame,
-    numeric_features: List[str],
     target: str = "TARGET",
     test_prop: float = 0.20
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
@@ -25,7 +25,7 @@ def prepare_data(
     return X_train, X_test, y_train, y_test  # Fixed typo: y_train_y_test
 
 
-def get_preprocessor(numeric_features: List[str]) -> ColumnTransformer:
+def get_preprocessor(numeric_features: List[str],categorical_features: List[str]) -> ColumnTransformer:
     """Gets the preprocessor artifact using submitted features"""
 
     # categorical_transformer
@@ -37,10 +37,16 @@ def get_preprocessor(numeric_features: List[str]) -> ColumnTransformer:
         ('scaler', StandardScaler())
     ])
 
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+        ('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
+        ])
+
     # Combine preprocessing
     preprocessor = ColumnTransformer(
         transformers=[
-            ('num', numeric_transformer, numeric_features)
+            ('num', numeric_transformer, numeric_features),
+            ('cat', categorical_transformer, categorical_features)
         ]
     )
 
@@ -68,7 +74,8 @@ def train_test_split_data(
     y = df[target]  # Fixed: was target_col
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_prop, random_state=101, stratify=y  # Fixed: use test_prop parameter
+        X, y, test_size=test_prop, random_state=101, stratify=y
+        # Fixed: use test_prop parameter
     )
 
     return X_train, X_test, y_train, y_test
@@ -95,19 +102,11 @@ def gen_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df['EMPLOYMENT_BKT'] = pd.cut(
         df['YEARS_EMPLOYED'],
-        bins=[0, 0.5, 1, 2, 5, 10, 20, 30, float('inf')],
-        labels=[
-            '< 0.5 years',
-            '0.5 - 1 year',
-            '1 - 2 years',
-            '2 - 5 years',
-            '5 - 10 years',
-            '10 - 20 years',
-            '20 - 30 years',
-            '> 30 years'
-        ],
+        bins=[0, 5, 10, float('inf')],
+        labels=['0-5 years', '5-10 years', '10+ years'],
         right=False
-    )
+        )
+
     df['EMPLOYMENT_BKT'] = df['EMPLOYMENT_BKT'].cat.add_categories('Unknown').fillna('Unknown')
 
     # OBS_30_CNT_SOCIAL_CIRCLE_BKT
