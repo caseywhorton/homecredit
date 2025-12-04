@@ -28,7 +28,7 @@ features:
     - AMT_CREDIT
     - AMT_GOODS_PRICE
     - YEARS_EMPLOYED
-  categorical:  # Uncomment when you add categorical features
+  categorical:  
     - EMPLOYMENT_BKT
     - OCCUPATION_TYPE
     - NAME_EDUCATION_TYPE
