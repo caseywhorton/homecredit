@@ -4,6 +4,9 @@ filepath:
   model_sink: ../artifacts/model_classifier.pkl
   preprocessor_sink: ../artifacts/preprocessor.pkl  # Add this
 
+# experiment name for mlflow
+experiment_name: homecredit-default-11102025-v3
+
 # Model hyperparameters
 model:
   n_estimators: 40
@@ -27,5 +30,5 @@ features:
     - YEARS_EMPLOYED
   categorical:  # Uncomment when you add categorical features
     - EMPLOYMENT_BKT
-  #   - OCCUPATION_TYPE
-  #   - NAME_EDUCATION_TYPE
+    - OCCUPATION_TYPE
+    - NAME_EDUCATION_TYPE

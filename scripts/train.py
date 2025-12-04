@@ -21,7 +21,8 @@ with open(params_path, 'r') as f:
 
 numeric_features = params['features']['numeric']
 categorical_features = params['features']['categorical']
-experiment_name = "homecredit-default-11102025-v3"
+experiment_name = params['experiment_name']
+#experiment_name = "homecredit-default-11102025"
 
 def train_with_mlflow(
     X_train,
@@ -38,51 +39,54 @@ def train_with_mlflow(
     mlflow.set_experiment(experiment_name)
     
     with mlflow.start_run():
-        # Log parameters
-        mlflow.log_params(params['model'])
-        
-        # Log training config
-        mlflow.log_params({
-            f'train_{k}': v for k, v in params['train'].items()
-        })
+        try:
+            # Log parameters
+            mlflow.log_params(params['model'])
+            
+            # Log training config
+            mlflow.log_params({
+                f'train_{k}': v for k, v in params['train'].items()
+            })
 
-        # Log features
-        mlflow.log_param('n_numeric_features', len(params['features']['numeric']))
-        mlflow.log_param('numeric_features', ','.join(params['features']['numeric']))
+            # Log features
+            mlflow.log_param('n_numeric_features', len(params['features']['numeric']))
+            mlflow.log_param('numeric_features', ','.join(params['features']['numeric']))
 
-        # Create and train model
-        model = create_model(preprocessor, **model_params)  # Fix: unpack dict
-        model.fit(X_train, y_train)
+            # Create and train model
+            model = create_model(preprocessor, **model_params)  # Fix: unpack dict
+            model.fit(X_train, y_train)
 
-        # Make predictions
-        y_train_pred = model.predict(X_train)
-        y_test_pred = model.predict(X_test)
+            # Make predictions
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
 
-        # Fix: Wrong metrics assigned
-        mlflow.log_metrics({
-            'train_accuracy': accuracy_score(y_train, y_train_pred),
-            'train_precision': precision_score(y_train, y_train_pred),
-            'train_recall': recall_score(y_train, y_train_pred),
-            'train_f1': f1_score(y_train, y_train_pred),
-            'test_accuracy': accuracy_score(y_test, y_test_pred),
-            'test_precision': precision_score(y_test, y_test_pred),
-            'test_recall': recall_score(y_test, y_test_pred),
-            'test_f1': f1_score(y_test, y_test_pred)
-        })
-        
-        # Log model to MLflow
-        mlflow.sklearn.log_model(model, "model")
-        
-        # Also save to artifacts directory (for DVC tracking)
-        artifacts_dir = Path(__file__).parent.parent / 'artifacts'
-        artifacts_dir.mkdir(exist_ok=True)
-        
-        model_path = artifacts_dir / 'model_classifier.pkl'
-        save_model(model, path=str(model_path))
-        
-        print(f"Model saved to: {model_path}")
-        print(f"MLflow run logged")
-        
+            # Fix: Wrong metrics assigned
+            mlflow.log_metrics({
+                'train_accuracy': accuracy_score(y_train, y_train_pred),
+                'train_precision': precision_score(y_train, y_train_pred),
+                'train_recall': recall_score(y_train, y_train_pred),
+                'train_f1': f1_score(y_train, y_train_pred),
+                'test_accuracy': accuracy_score(y_test, y_test_pred),
+                'test_precision': precision_score(y_test, y_test_pred),
+                'test_recall': recall_score(y_test, y_test_pred),
+                'test_f1': f1_score(y_test, y_test_pred)
+            })
+            
+            # Log model to MLflow
+            mlflow.sklearn.log_model(model, "model")
+            
+            # Also save to artifacts directory (for DVC tracking)
+            artifacts_dir = Path(__file__).parent.parent / 'artifacts'
+            artifacts_dir.mkdir(exist_ok=True)
+            
+            model_path = artifacts_dir / 'model_classifier.pkl'
+            save_model(model, path=str(model_path))
+            
+            print(f"Model saved to: {model_path}")
+            print(f"MLflow run logged")
+        except Exception as e:
+            print(f"Error in process: {e}")
+
         return model
 
 
