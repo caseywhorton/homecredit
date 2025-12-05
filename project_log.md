@@ -43,3 +43,10 @@ Added a training module.
 Added a parameters YAML file to parameterize training.  
 Retrained model with same parameters and pushed changes to DVC.  
 Converted flow to MLFlow.
+
+## Date 2025-12-03 (45 minutes)
+
+Added extra categorical features for employment and education type.  
+Added images showing separation for different education and employment types.  
+Did not show model improvement.  
+Looked at the credit card history again, planning on tackling utilization next time.  
