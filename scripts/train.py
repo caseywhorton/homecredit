@@ -22,7 +22,6 @@ with open(params_path, 'r') as f:
 numeric_features = params['features']['numeric']
 categorical_features = params['features']['categorical']
 experiment_name = params['experiment_name']
-#experiment_name = "homecredit-default-11102025"
 
 def train_with_mlflow(
     X_train,
@@ -103,9 +102,15 @@ def main():
     df = pd.read_csv(data_path)
     print(f"   Shape: {df.shape}")
 
+    # Read Credit Card Data from Source
+    print(f"Loading data from: {params['filepath']['source_data_cc']}")
+    data_path = Path(__file__).parent.parent / params['filepath']['source_data_cc']
+    cc = pd.read_csv(data_path)
+    print(f"   Shape: {cc.shape}")
+
     # Extract features and create train/test split
     print("\nPreparing data...")
-    X_train, X_test, y_train, y_test = prepare_data(df)
+    X_train, X_test, y_train, y_test = prepare_data(df, cc)
     print(f"   Train: {X_train.shape}, Test: {X_test.shape}")
 
     # Get the preprocessor

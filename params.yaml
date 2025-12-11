@@ -1,6 +1,7 @@
 # Filepaths
 filepath:
   source_data: home-credit-default-risk/application_train.csv  # Relative to project root
+  source_data_cc: home-credit-default-risk/credit_card_balance.csv
   model_sink: ../artifacts/model_classifier.pkl
   preprocessor_sink: ../artifacts/preprocessor.pkl  # Add this
 
@@ -28,6 +29,7 @@ features:
     - AMT_CREDIT
     - AMT_GOODS_PRICE
     - YEARS_EMPLOYED
+    - UTILIZATION
   categorical:  
     - EMPLOYMENT_BKT
     - OCCUPATION_TYPE

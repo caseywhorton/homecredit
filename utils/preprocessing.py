@@ -11,14 +11,15 @@ from typing import Tuple, List
 
 def prepare_data(
     df: pd.DataFrame,
+    cc: pd.DataFrame,
     target: str = "TARGET",
     test_prop: float = 0.20
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Preprocesses dataframe for model fitting"""
 
     # clean the dataframe and add transformed features
-    data_with_features = gen_features(df)
-
+    data_with_features = gen_features(df, cc)
+    print('columns after join', data_with_features.columns)
     # Split into train/test
     X_train, X_test, y_train, y_test = train_test_split_data(data_with_features, target, test_prop)
 
@@ -81,7 +82,7 @@ def train_test_split_data(
     return X_train, X_test, y_train, y_test
 
 
-def gen_features(df: pd.DataFrame) -> pd.DataFrame:
+def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
     """Cleans the dataframe and creates feature engineering columns"""
     
     # OCCUPATION_TYPE
@@ -161,5 +162,21 @@ def gen_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Take the natural log of 
     df['AMT_GOODS_PRICE'] = np.log(df['AMT_GOODS_PRICE'])
+
+    # create the utilization
+    balance_sum = cc.groupby('SK_ID_CURR')['AMT_BALANCE'].sum()
+    credit_limit_sum = cc.groupby('SK_ID_CURR')['AMT_CREDIT_LIMIT_ACTUAL'].sum()
+
+    # Replace 0 with NaN to avoid division by zero
+    credit_limit_sum = credit_limit_sum.replace(0, np.nan)
+
+    utilization = balance_sum / credit_limit_sum
+
+    # Convert to DataFrame
+    utilization_df = utilization.reset_index()
+    utilization_df.columns = ['SK_ID_CURR', 'UTILIZATION']
+
+    # join with the dataframe
+    df = df.merge(utilization_df, on='SK_ID_CURR', how='left')
 
     return df
