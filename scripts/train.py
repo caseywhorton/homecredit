@@ -48,15 +48,15 @@ def train_with_mlflow(
     with mlflow.start_run():
         try:
             # Log parameters
-            print("Log model parameters")
+            print("Logging model parameters...")
             mlflow.log_params(params["model"])
 
             # Log training config
-            print("Log training config")
+            print("Logging training config...")
             mlflow.log_params({f"train_{k}": v for k, v in params["train"].items()})
 
             # Log features
-            print("Log features")
+            print("Logging features...")
             if numeric_features:
                 mlflow.log_param("numeric_features", ",".join(numeric_features))
             if categorical_features:
@@ -67,9 +67,9 @@ def train_with_mlflow(
                 mlflow.log_param("flag_features", ",".join(flag_features))
 
             # Create and train model
-            print("creating model")
+            print("Creating model...")
             model = create_model(preprocessor, **model_params)
-            print("fitting model")
+            print("Fitting model...")
             model.fit(X_train, y_train)
 
             # Make predictions

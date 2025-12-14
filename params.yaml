@@ -10,7 +10,7 @@ experiment_name: homecredit-default-11102025-v3
 
 # Model hyperparameters
 model:
-  n_estimators: 40
+  n_estimators: 100
   max_depth: 10
   class_weight: balanced
   random_state: 42
@@ -30,25 +30,27 @@ features:
     - AMT_GOODS_PRICE
     - YEARS_EMPLOYED
     - UTILIZATION
-  # categorical:  
-  #   - EMPLOYMENT_BKT
-  #   - OCCUPATION_TYPE
-  #   - NAME_EDUCATION_TYPE
-  # ordinal:
-  #   - CNT_CHILDREN
-  #   #- CNT_FAM_MEMBERS
-  # flag:
-  #   - FLAG_OWN_CAR
-  #   # - FLAG_OWN_REALTY
-  #   # - FLAG_MOBIL
-  #   # - FLAG_EMP_PHONE
-  #   # - FLAG_WORK_PHONE
-  #   # - FLAG_CONT_MOBILE
-  #   # - FLAG_PHONE
-  #   # - FLAG_EMAIL
-  #   # - REG_REGION_NOT_LIVE_REGION
-  #   # - REG_REGION_NOT_WORK_REGION
-  #   # - LIVE_REGION_NOT_WORK_REGION
-  #   # - REG_CITY_NOT_LIVE_CITY
-  #   # - REG_CITY_NOT_WORK_CITY
-  #   # - LIVE_CITY_NOT_WORK_CITY
+  categorical:  
+    - EMPLOYMENT_BKT
+    - OCCUPATION_TYPE
+    - NAME_EDUCATION_TYPE
+    - FLAG_OWN_CAR
+    - FLAG_OWN_REALTY
+    - FLAG_MOBIL
+    - FLAG_EMP_PHONE
+    - FLAG_WORK_PHONE
+    - FLAG_CONT_MOBILE
+    - FLAG_PHONE
+    - FLAG_EMAIL
+    - REG_REGION_NOT_LIVE_REGION
+    - REG_REGION_NOT_WORK_REGION
+    - LIVE_REGION_NOT_WORK_REGION
+    - REG_CITY_NOT_LIVE_CITY
+    - REG_CITY_NOT_WORK_CITY
+    - LIVE_CITY_NOT_WORK_CITY
+  ordinal:
+    - CNT_CHILDREN
+    - CNT_FAM_MEMBERS
+  #flag:
+    
+  

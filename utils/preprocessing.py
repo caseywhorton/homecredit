@@ -59,7 +59,7 @@ def get_preprocessor(
 
     ordinal_transformer = Pipeline(
         steps=[
-            ("imputer", SimpleImputer(strategy="constant", fill_value=-1)),
+            ("imputer", SimpleImputer(strategy="constant", fill_value=0)),
             (
                 "ordinal",
                 OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
