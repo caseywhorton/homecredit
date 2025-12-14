@@ -3,6 +3,7 @@ filepath:
   source_data: home-credit-default-risk/application_train.csv  # Relative to project root
   source_data_cc: home-credit-default-risk/credit_card_balance.csv
   model_sink: ../artifacts/model_classifier.pkl
+  model_artifact_dir: mlartifacts/
   preprocessor_sink: ../artifacts/preprocessor.pkl  # Add this
 
 # experiment name for mlflow
@@ -19,7 +20,7 @@ model:
 train:
   test_size: 0.2
   random_state: 101
-  stratify: true  # Add this - important for imbalanced data
+  stratify: true
 
 # Features
 features:

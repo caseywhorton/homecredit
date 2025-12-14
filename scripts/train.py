@@ -128,7 +128,7 @@ def train_with_mlflow(
             plt.tight_layout()
 
             # Save and log the figure
-            roc_path = "roc_curve.png"
+            roc_path = "/".join((params["filepath"]["model_artifact_dir"], "roc_curve.png"))
             plt.savefig(roc_path)
             mlflow.log_artifact(roc_path)
             plt.close()
