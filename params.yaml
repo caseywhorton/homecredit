@@ -31,6 +31,9 @@ features:
     - AMT_GOODS_PRICE
     - YEARS_EMPLOYED
     - UTILIZATION
+    - EXT_SOURCE_1
+    - EXT_SOURCE_2
+    - EXT_SOURCE_3
   categorical:  
     - EMPLOYMENT_BKT
     - OCCUPATION_TYPE
@@ -52,6 +55,9 @@ features:
   ordinal:
     - CNT_CHILDREN
     - CNT_FAM_MEMBERS
+    
+
+
   #flag:
     
   
