@@ -127,6 +127,30 @@ def train_test_split_data(
     return X_train, X_test, y_train, y_test
 
 
+def get_max_utilization(df):
+    "gets a dataframe for max utilization over client history"
+
+    utilization_df = df[["SK_ID_CURR", "AMT_BALANCE", "AMT_CREDIT_LIMIT_ACTUAL"]].copy()
+
+    # Replace 0 with NaN to avoid division by zero
+    utilization_df["AMT_CREDIT_LIMIT_ACTUAL"] = utilization_df[
+        "AMT_CREDIT_LIMIT_ACTUAL"
+    ].replace(0, np.nan)
+
+    # Calculate utilization (will be NaN where credit limit is 0 or NaN)
+    utilization_df["UTILIZATION"] = (
+        utilization_df["AMT_BALANCE"] / utilization_df["AMT_CREDIT_LIMIT_ACTUAL"]
+    )
+
+    # Group by client and get max, ignoring NaN values
+    max_utilization_df = utilization_df.groupby("SK_ID_CURR")["UTILIZATION"].max()
+
+    max_utilization_df = max_utilization_df.reset_index()
+    max_utilization_df.columns = ["SK_ID_CURR", "MAX_UTILIZATION"]
+
+    return max_utilization_df
+
+
 def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
     """Cleans the dataframe and creates feature engineering columns"""
 
@@ -247,5 +271,9 @@ def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
 
     # join with the dataframe
     df = df.merge(utilization_df, on="SK_ID_CURR", how="left")
+
+    max_utilization_df = get_max_utilization(cc)
+
+    df = df.merge(max_utilization_df, on="SK_ID_CURR", how="left")
 
     return df

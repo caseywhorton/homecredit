@@ -31,6 +31,7 @@ features:
     - AMT_GOODS_PRICE
     - YEARS_EMPLOYED
     - UTILIZATION
+    - MAX_UTILIZATION
     - EXT_SOURCE_1
     - EXT_SOURCE_2
     - EXT_SOURCE_3
