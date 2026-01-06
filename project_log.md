@@ -50,3 +50,9 @@ Added extra categorical features for employment and education type.
 Added images showing separation for different education and employment types.  
 Did not show model improvement.  
 Looked at the credit card history again, planning on tackling utilization next time.  
+
+## Date 2026-01-05 (30 minutes)
+
+Added the max utilization feature.
+Measures the maximum credit utilization seen in customer's history.
+Added AUC and ROC curve to ML Flow.
