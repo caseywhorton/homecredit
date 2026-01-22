@@ -35,6 +35,7 @@ features:
     - EXT_SOURCE_1
     - EXT_SOURCE_2
     - EXT_SOURCE_3
+    - MOB
   categorical:  
     - EMPLOYMENT_BKT
     - OCCUPATION_TYPE
@@ -53,6 +54,7 @@ features:
     - REG_CITY_NOT_LIVE_CITY
     - REG_CITY_NOT_WORK_CITY
     - LIVE_CITY_NOT_WORK_CITY
+    - MAX_DPD_IND
   ordinal:
     - CNT_CHILDREN
     - CNT_FAM_MEMBERS

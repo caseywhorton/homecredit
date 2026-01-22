@@ -56,3 +56,9 @@ Looked at the credit card history again, planning on tackling utilization next t
 Added the max utilization feature.
 Measures the maximum credit utilization seen in customer's history.
 Added AUC and ROC curve to ML Flow.
+
+## Date 2026-01-21 (30 minutes)
+
+Added days past due (DPD) and month on book (MOB) features.  
+Ran a few experiments, no dramatic change but a new lead model.  
+Able to order the experiment runs by the test AUC which shows best models.  

@@ -1,5 +1,5 @@
 outs:
-- md5: 9ededf9cd42a7a23e521d7c86b43e926
-  size: 4007419
+- md5: caa16e74e7e41c9b139080e445e27d1f
+  size: 2
   hash: md5
   path: model_classifier.pkl

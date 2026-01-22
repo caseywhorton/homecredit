@@ -127,6 +127,17 @@ def train_test_split_data(
     return X_train, X_test, y_train, y_test
 
 
+def get_mob(df):
+    "Gets the months on book (MOB) from a dataframe using the 'MONTHS_BALANCE' feature"
+    if "MONTHS_BALANCE" not in df.columns:
+        print("MONTHS_BALANCE must be in column list")
+
+    result = df.groupby("SK_ID_CURR")["MONTHS_BALANCE"].min().abs().reset_index()
+    result.columns = ["SK_ID_CURR", "MOB"]
+
+    return result
+
+
 def get_max_utilization(df):
     "gets a dataframe for max utilization over client history"
 
@@ -149,6 +160,45 @@ def get_max_utilization(df):
     max_utilization_df.columns = ["SK_ID_CURR", "MAX_UTILIZATION"]
 
     return max_utilization_df
+
+
+def get_dpd(df):
+    "Gets DPD features"
+
+    max_df = df.groupby("SK_ID_CURR")["SK_DPD"].max().reset_index().fillna(0)
+    max_df["MAX_DPD_IND"] = (max_df["SK_DPD"] > 0).astype(int)
+    max_df.drop("SK_DPD", axis=1, inplace=True)
+    max_df.columns = ["SK_ID_CURR", "MAX_DPD_IND"]
+
+    max_6mo_df = (
+        df[df["MONTHS_BALANCE"] >= -6]
+        .groupby("SK_ID_CURR")["SK_DPD"]
+        .max()
+        .reset_index()
+        .fillna(0)
+    )
+    max_6mo_df["MAX_DPD_L6M_IND"] = (max_6mo_df["SK_DPD"] > 0).astype(int)
+    max_6mo_df.drop("SK_DPD", axis=1, inplace=True)
+    max_6mo_df.columns = ["SK_ID_CURR", "MAX_DPD_L6M_IND"]
+
+    max_recent_df = (
+        df[df["MONTHS_BALANCE"] == -1]
+        .groupby("SK_ID_CURR")["SK_DPD"]
+        .max()
+        .reset_index()
+        .fillna(0)
+    )
+    max_recent_df["MAX_DPD_L1M_IND"] = (max_recent_df["SK_DPD"] > 0).astype(int)
+    max_recent_df.drop("SK_DPD", axis=1, inplace=True)
+    max_recent_df.columns = ["SK_ID_CURR", "MAX_DPD_L1M_IND"]
+
+    result_df = (
+        max_df.merge(max_6mo_df, on="SK_ID_CURR", how="outer")
+        .merge(max_recent_df, on="SK_ID_CURR", how="outer")
+        .fillna(0)
+    )
+
+    return result_df
 
 
 def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
@@ -275,5 +325,13 @@ def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
     max_utilization_df = get_max_utilization(cc)
 
     df = df.merge(max_utilization_df, on="SK_ID_CURR", how="left")
+
+    # get the mob and join
+    mob_df = get_mob(cc)
+    df = df.merge(mob_df, on="SK_ID_CURR", how="left")
+
+    # get the DPD and join
+    dpd_df = get_dpd(cc)
+    df = df.merge(dpd_df, on="SK_ID_CURR", how="left")
 
     return df
