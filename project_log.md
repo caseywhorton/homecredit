@@ -62,3 +62,8 @@ Added AUC and ROC curve to ML Flow.
 Added days past due (DPD) and month on book (MOB) features.  
 Ran a few experiments, no dramatic change but a new lead model.  
 Able to order the experiment runs by the test AUC which shows best models.  
+
+## Date 2026-01-22 (30 minutes)
+
+Add a few features for the max installment date and what I believe to be a minimum payment.  
+Starting to see some overfitting, so looking to keep adding features.  
