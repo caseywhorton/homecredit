@@ -67,3 +67,8 @@ Able to order the experiment runs by the test AUC which shows best models.
 
 Add a few features for the max installment date and what I believe to be a minimum payment.  
 Starting to see some overfitting, so looking to keep adding features.  
+
+## Date 2026-01-26 (30 minutes)
+
+Updated the readme, preprocessing and trian scripts for formatting.  
+Create a to-do-list.  

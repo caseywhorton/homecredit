@@ -1,33 +1,60 @@
+"""
+Data preprocessing module for loan default prediction.
+
+This module provides functions for feature engineering, data preparation,
+and preprocessing pipeline creation for machine learning models.
+"""
+
+from typing import List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import (
-    StandardScaler,
+    FunctionTransformer,
     OneHotEncoder,
     OrdinalEncoder,
-    FunctionTransformer,
+    StandardScaler,
 )
-from sklearn.impute import SimpleImputer
 
-import pandas as pd
-import numpy as np
-from typing import Tuple, List, Optional
+
+# =============================================================================
+# Main Data Preparation Functions
+# =============================================================================
 
 
 def prepare_data(
-    df: pd.DataFrame, cc: pd.DataFrame, target: str = "TARGET", test_prop: float = 0.20
+    df: pd.DataFrame,
+    cc: pd.DataFrame,
+    target: str = "TARGET",
+    test_prop: float = 0.20,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    """Preprocesses dataframe for model fitting"""
+    """
+    Prepare data for model training by adding features and splitting.
 
-    # clean the dataframe and add transformed features
+    Args:
+        df: Main application dataframe (application_train)
+        cc: Credit card balance dataframe (credit_card_balance)
+        target: Name of target column
+        test_prop: Proportion of data to use for test set
+            Current fixed to 20% (0.20)
+
+    Returns:
+        Tuple of (X_train, X_test, y_train, y_test)
+    """
+    # Clean the dataframe and add transformed features
     data_with_features = gen_features(df, cc)
     print("columns after join", data_with_features.columns)
+
     # Split into train/test
     X_train, X_test, y_train, y_test = train_test_split_data(
         data_with_features, target, test_prop
     )
 
-    return X_train, X_test, y_train, y_test  # Fixed typo: y_train_y_test
+    return X_train, X_test, y_train, y_test
 
 
 def get_preprocessor(
@@ -36,11 +63,18 @@ def get_preprocessor(
     ordinal_features: Optional[List[str]] = None,
     flag_features: Optional[List[str]] = None,
 ) -> ColumnTransformer:
-    """Gets the preprocessor artifact using submitted features"""
+    """
+    Create sklearn preprocessing pipeline for different feature types.
 
-    # categorical_transformer
-    # passthrough features
+    Args:
+        numeric_features: List of numeric column names
+        categorical_features: List of categorical column names
+        ordinal_features: List of ordinal column names
+        flag_features: List of binary flag column names
 
+    Returns:
+        ColumnTransformer with appropriate preprocessing steps
+    """
     # Define transformers
     numeric_transformer = Pipeline(
         steps=[
@@ -52,8 +86,16 @@ def get_preprocessor(
     categorical_transformer = Pipeline(
         steps=[
             ("to_str", FunctionTransformer(lambda x: x.astype(str))),
-            ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+            (
+                "imputer",
+                SimpleImputer(strategy="constant", fill_value="missing"),
+            ),
+            (
+                "encoder",
+                OneHotEncoder(
+                    handle_unknown="ignore", sparse_output=False
+                ),
+            ),
         ]
     )
 
@@ -62,7 +104,9 @@ def get_preprocessor(
             ("imputer", SimpleImputer(strategy="constant", fill_value=0)),
             (
                 "ordinal",
-                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+                OrdinalEncoder(
+                    handle_unknown="use_encoded_value", unknown_value=-1
+                ),
             ),
         ]
     )
@@ -80,16 +124,24 @@ def get_preprocessor(
     transformers = []
 
     if numeric_features is not None and len(numeric_features) > 0:
-        transformers.append(("num", numeric_transformer, numeric_features))
+        transformers.append(
+            ("num", numeric_transformer, numeric_features)
+        )
 
     if categorical_features is not None and len(categorical_features) > 0:
-        transformers.append(("cat", categorical_transformer, categorical_features))
+        transformers.append(
+            ("cat", categorical_transformer, categorical_features)
+        )
 
     if ordinal_features is not None and len(ordinal_features) > 0:
-        transformers.append(("ord", ordinal_transformer, ordinal_features))
+        transformers.append(
+            ("ord", ordinal_transformer, ordinal_features)
+        )
 
     if flag_features is not None and len(flag_features) > 0:
-        transformers.append(("flag", flag_transformer, flag_features))
+        transformers.append(
+            ("flag", flag_transformer, flag_features)
+        )
 
     # Create the preprocessor with only the relevant transformers
     preprocessor = ColumnTransformer(transformers=transformers)
@@ -101,19 +153,18 @@ def train_test_split_data(
     df: pd.DataFrame, target: str = "TARGET", test_prop: float = 0.20
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """
-    Prepares the dataframe by splitting into a train and test dataframe
+    Split dataframe into training and test sets.
 
     Args:
-        df: Input dataframe
+        df: Input dataframe with features and target
         target: Target column name
-        test_prop: Proportion for test set
+        test_prop: Proportion for test set (0-1)
 
     Returns:
         Tuple of (X_train, X_test, y_train, y_test)
     """
-
-    X = df.drop(columns=[target])  # Fixed: was target_col
-    y = df[target]  # Fixed: was target_col
+    X = df.drop(columns=[target])
+    y = df[target]
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -121,89 +172,24 @@ def train_test_split_data(
         test_size=test_prop,
         random_state=101,
         stratify=y,
-        # Fixed: use test_prop parameter
     )
 
     return X_train, X_test, y_train, y_test
 
 
-def get_mob(df):
-    "Gets the months on book (MOB) from a dataframe using the 'MONTHS_BALANCE' feature"
-    if "MONTHS_BALANCE" not in df.columns:
-        print("MONTHS_BALANCE must be in column list")
+def gen_features(
+    df: pd.DataFrame, cc: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Generate engineered features and clean dataframe.
 
-    result = df.groupby("SK_ID_CURR")["MONTHS_BALANCE"].min().abs().reset_index()
-    result.columns = ["SK_ID_CURR", "MOB"]
+    Args:
+        df: Main application dataframe
+        cc: Credit card balance dataframe
 
-    return result
-
-
-def get_max_utilization(df):
-    "gets a dataframe for max utilization over client history"
-
-    utilization_df = df[["SK_ID_CURR", "AMT_BALANCE", "AMT_CREDIT_LIMIT_ACTUAL"]].copy()
-
-    # Replace 0 with NaN to avoid division by zero
-    utilization_df["AMT_CREDIT_LIMIT_ACTUAL"] = utilization_df[
-        "AMT_CREDIT_LIMIT_ACTUAL"
-    ].replace(0, np.nan)
-
-    # Calculate utilization (will be NaN where credit limit is 0 or NaN)
-    utilization_df["UTILIZATION"] = (
-        utilization_df["AMT_BALANCE"] / utilization_df["AMT_CREDIT_LIMIT_ACTUAL"]
-    )
-
-    # Group by client and get max, ignoring NaN values
-    max_utilization_df = utilization_df.groupby("SK_ID_CURR")["UTILIZATION"].max()
-
-    max_utilization_df = max_utilization_df.reset_index()
-    max_utilization_df.columns = ["SK_ID_CURR", "MAX_UTILIZATION"]
-
-    return max_utilization_df
-
-
-def get_dpd(df):
-    "Gets DPD features"
-
-    max_df = df.groupby("SK_ID_CURR")["SK_DPD"].max().reset_index().fillna(0)
-    max_df["MAX_DPD_IND"] = (max_df["SK_DPD"] > 0).astype(int)
-    max_df.drop("SK_DPD", axis=1, inplace=True)
-    max_df.columns = ["SK_ID_CURR", "MAX_DPD_IND"]
-
-    max_6mo_df = (
-        df[df["MONTHS_BALANCE"] >= -6]
-        .groupby("SK_ID_CURR")["SK_DPD"]
-        .max()
-        .reset_index()
-        .fillna(0)
-    )
-    max_6mo_df["MAX_DPD_L6M_IND"] = (max_6mo_df["SK_DPD"] > 0).astype(int)
-    max_6mo_df.drop("SK_DPD", axis=1, inplace=True)
-    max_6mo_df.columns = ["SK_ID_CURR", "MAX_DPD_L6M_IND"]
-
-    max_recent_df = (
-        df[df["MONTHS_BALANCE"] == -1]
-        .groupby("SK_ID_CURR")["SK_DPD"]
-        .max()
-        .reset_index()
-        .fillna(0)
-    )
-    max_recent_df["MAX_DPD_L1M_IND"] = (max_recent_df["SK_DPD"] > 0).astype(int)
-    max_recent_df.drop("SK_DPD", axis=1, inplace=True)
-    max_recent_df.columns = ["SK_ID_CURR", "MAX_DPD_L1M_IND"]
-
-    result_df = (
-        max_df.merge(max_6mo_df, on="SK_ID_CURR", how="outer")
-        .merge(max_recent_df, on="SK_ID_CURR", how="outer")
-        .fillna(0)
-    )
-
-    return result_df
-
-
-def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
-    """Cleans the dataframe and creates feature engineering columns"""
-
+    Returns:
+        Dataframe with engineered features added
+    """
     # OCCUPATION_TYPE
     df["OCCUPATION_TYPE"] = df.OCCUPATION_TYPE.fillna("Unknown")
 
@@ -216,7 +202,9 @@ def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
     )
 
     df["CNT_FAM_MEMBERS_BKT"] = (
-        df["CNT_FAM_MEMBERS_BKT"].cat.add_categories("Unknown").fillna("Unknown")
+        df["CNT_FAM_MEMBERS_BKT"]
+        .cat.add_categories("Unknown")
+        .fillna("Unknown")
     )
 
     # EMPLOYMENT_BKT
@@ -230,7 +218,9 @@ def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
     )
 
     df["EMPLOYMENT_BKT"] = (
-        df["EMPLOYMENT_BKT"].cat.add_categories("Unknown").fillna("Unknown")
+        df["EMPLOYMENT_BKT"]
+        .cat.add_categories("Unknown")
+        .fillna("Unknown")
     )
 
     # OBS_30_CNT_SOCIAL_CIRCLE_BKT
@@ -303,12 +293,14 @@ def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
         .fillna("Unknown")
     )
 
-    # Take the natural log of
+    # Take the natural log of AMT_GOODS_PRICE
     df["AMT_GOODS_PRICE"] = np.log(df["AMT_GOODS_PRICE"])
 
-    # create the utilization
+    # Create the utilization features
     balance_sum = cc.groupby("SK_ID_CURR")["AMT_BALANCE"].sum()
-    credit_limit_sum = cc.groupby("SK_ID_CURR")["AMT_CREDIT_LIMIT_ACTUAL"].sum()
+    credit_limit_sum = (
+        cc.groupby("SK_ID_CURR")["AMT_CREDIT_LIMIT_ACTUAL"].sum()
+    )
 
     # Replace 0 with NaN to avoid division by zero
     credit_limit_sum = credit_limit_sum.replace(0, np.nan)
@@ -319,19 +311,220 @@ def gen_features(df: pd.DataFrame, cc: pd.DataFrame) -> pd.DataFrame:
     utilization_df = utilization.reset_index()
     utilization_df.columns = ["SK_ID_CURR", "UTILIZATION"]
 
-    # join with the dataframe
+    # Join with the dataframe
     df = df.merge(utilization_df, on="SK_ID_CURR", how="left")
 
+    # Get max utilization and join
     max_utilization_df = get_max_utilization(cc)
-
     df = df.merge(max_utilization_df, on="SK_ID_CURR", how="left")
 
-    # get the mob and join
+    # Get the months on book and join
     mob_df = get_mob(cc)
     df = df.merge(mob_df, on="SK_ID_CURR", how="left")
 
-    # get the DPD and join
+    # Get the DPD features and join
     dpd_df = get_dpd(cc)
     df = df.merge(dpd_df, on="SK_ID_CURR", how="left")
 
+    # Get the minimum payment metrics and join
+    min_pay_df = get_min_pay(cc)
+    df = df.merge(min_pay_df, on="SK_ID_CURR", how="left")
+
     return df
+
+
+# =============================================================================
+# Feature Engineering Helper Functions
+# =============================================================================
+
+
+def get_mob(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate months on book (MOB) from credit card history.
+
+    Args:
+        df: Credit card dataframe with MONTHS_BALANCE column
+
+    Returns:
+        Dataframe with SK_ID_CURR, MOB, and MAX_INSTALL columns
+    """
+    if "MONTHS_BALANCE" not in df.columns:
+        print("MONTHS_BALANCE must be in column list")
+
+    df_mob = (
+        df.groupby("SK_ID_CURR")["MONTHS_BALANCE"]
+        .min()
+        .abs()
+        .reset_index()
+    )
+
+    df_installment = (
+        df.groupby("SK_ID_CURR")["CNT_INSTALMENT_MATURE_CUM"]
+        .max()
+        .abs()
+        .reset_index()
+    )
+
+    result_df = df_mob.merge(
+        df_installment, on="SK_ID_CURR", how="left"
+    )
+
+    result_df.columns = ["SK_ID_CURR", "MOB", "MAX_INSTALL"]
+
+    return result_df
+
+
+def get_max_utilization(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate maximum credit utilization over client history.
+
+    Args:
+        df: Credit card dataframe with balance and limit columns
+
+    Returns:
+        Dataframe with SK_ID_CURR and MAX_UTILIZATION columns
+    """
+    utilization_df = df[
+        ["SK_ID_CURR", "AMT_BALANCE", "AMT_CREDIT_LIMIT_ACTUAL"]
+    ].copy()
+
+    # Replace 0 with NaN to avoid division by zero
+    utilization_df["AMT_CREDIT_LIMIT_ACTUAL"] = utilization_df[
+        "AMT_CREDIT_LIMIT_ACTUAL"
+    ].replace(0, np.nan)
+
+    # Calculate utilization (will be NaN where credit limit is 0)
+    utilization_df["UTILIZATION"] = (
+        utilization_df["AMT_BALANCE"]
+        / utilization_df["AMT_CREDIT_LIMIT_ACTUAL"]
+    )
+
+    # Group by client and get max, ignoring NaN values
+    max_utilization_df = (
+        utilization_df.groupby("SK_ID_CURR")["UTILIZATION"]
+        .max()
+        .reset_index()
+    )
+
+    max_utilization_df.columns = ["SK_ID_CURR", "MAX_UTILIZATION"]
+
+    return max_utilization_df
+
+
+def get_dpd(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate days past due (DPD) indicator features.
+
+    Creates indicators for whether customer has ever been past due,
+    past due in last 6 months, and past due in last month.
+
+    Args:
+        df: Credit card dataframe with SK_DPD and MONTHS_BALANCE
+
+    Returns:
+        Dataframe with SK_ID_CURR and DPD indicator columns
+    """
+    # Max DPD overall
+    max_df = (
+        df.groupby("SK_ID_CURR")["SK_DPD"]
+        .max()
+        .reset_index()
+        .fillna(0)
+    )
+    max_df["MAX_DPD_IND"] = (max_df["SK_DPD"] > 0).astype(int)
+    max_df.drop("SK_DPD", axis=1, inplace=True)
+    max_df.columns = ["SK_ID_CURR", "MAX_DPD_IND"]
+
+    # Max DPD in last 6 months
+    max_6mo_df = (
+        df[df["MONTHS_BALANCE"] >= -6]
+        .groupby("SK_ID_CURR")["SK_DPD"]
+        .max()
+        .reset_index()
+        .fillna(0)
+    )
+    max_6mo_df["MAX_DPD_L6M_IND"] = (
+        max_6mo_df["SK_DPD"] > 0
+    ).astype(int)
+    max_6mo_df.drop("SK_DPD", axis=1, inplace=True)
+    max_6mo_df.columns = ["SK_ID_CURR", "MAX_DPD_L6M_IND"]
+
+    # Max DPD in most recent month
+    max_recent_df = (
+        df[df["MONTHS_BALANCE"] == -1]
+        .groupby("SK_ID_CURR")["SK_DPD"]
+        .max()
+        .reset_index()
+        .fillna(0)
+    )
+    max_recent_df["MAX_DPD_L1M_IND"] = (
+        max_recent_df["SK_DPD"] > 0
+    ).astype(int)
+    max_recent_df.drop("SK_DPD", axis=1, inplace=True)
+    max_recent_df.columns = ["SK_ID_CURR", "MAX_DPD_L1M_IND"]
+
+    # Merge all DPD features
+    result_df = (
+        max_df.merge(max_6mo_df, on="SK_ID_CURR", how="outer")
+        .merge(max_recent_df, on="SK_ID_CURR", how="outer")
+        .fillna(0)
+    )
+
+    return result_df
+
+
+def get_min_pay(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate minimum payment behavior indicators.
+
+    Creates features for whether customer pays only minimum,
+    pays less than 2.5% of balance, and average principal to
+    balance payment ratio.
+
+    Args:
+        df: Credit card dataframe with payment columns
+
+    Returns:
+        Dataframe with SK_ID_CURR and payment behavior columns
+    """
+    df["MIN_PAY_IND"] = (
+        (
+            df["AMT_PAYMENT_TOTAL_CURRENT"]
+            == df["AMT_INST_MIN_REGULARITY"]
+        )
+        & (df["AMT_INST_MIN_REGULARITY"] > 0)
+    ).astype(int)
+
+    df["MIN_PAY_2P5_IND"] = (
+        (
+            df["AMT_PAYMENT_TOTAL_CURRENT"]
+            <= df["AMT_BALANCE"]
+        )
+        & (df["AMT_INST_MIN_REGULARITY"] > 0)
+    ).astype(int)
+
+    result_df = (
+        df[["SK_ID_CURR", "MIN_PAY_IND", "MIN_PAY_2P5_IND"]]
+        .groupby("SK_ID_CURR")
+        .max()
+        .reset_index()
+    )
+
+    # Calculate average principal to balance payment ratio
+    df_prin_pay = (
+        df.assign(
+            AMT_PRIN_BAL_PAY_AVG=(
+                df["AMT_RECEIVABLE_PRINCIPAL"]
+                / df["AMT_BALANCE"].replace(0, np.nan)
+            )
+        )
+        .groupby("SK_ID_CURR")["AMT_PRIN_BAL_PAY_AVG"]
+        .mean()
+        .reset_index()
+    ).fillna(1)
+
+    result_df = result_df.merge(
+        df_prin_pay, on="SK_ID_CURR", how="left"
+    )
+
+    return result_df
