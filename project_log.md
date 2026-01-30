@@ -72,3 +72,8 @@ Starting to see some overfitting, so looking to keep adding features.
 
 Updated the readme, preprocessing and trian scripts for formatting.  
 Create a to-do-list.  
+
+## Date 2026-01-28
+
+Added cross validation portion to model training.  
+Log the cross validation mean results to ML flow.  

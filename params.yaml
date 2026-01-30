@@ -8,19 +8,33 @@ filepath:
 
 # experiment name for mlflow
 experiment_name: homecredit-default-11102025-v3
+tuning_experiment_name: "hyperparameter_tuning_v1" 
+
 
 # Model hyperparameters
 model:
-  n_estimators: 100
-  max_depth: 10
-  class_weight: balanced
-  random_state: 42
+  subsample: 0.9
+  reg_lambda: 1.0
+  reg_alpha: 1.0
+  num_leaves: 15
+  n_estimators: 300
+  min_child_samples: 5
+  max_depth: 9
+  learning_rate: 0.05
+  colsample_bytree: 0.8
 
 # Data split
 train:
-  test_size: 0.2
+  test_size: 0.20
   random_state: 101
-  stratify: true
+  use_cv: true        
+  cv_folds: 5    
+
+tuning:
+  model_type: "lightgbm"  # or "xgboost"
+  n_iter: 20                   # Number of random combinations to try
+  cv_folds: 5                  # Cross-validation folds for tuning
+  scoring: "f1"          # Metric to optimize    
 
 # Features
 features:

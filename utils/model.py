@@ -3,16 +3,27 @@ from sklearn.pipeline import Pipeline
 import joblib
 
 
-def create_model(preprocessor, **model_params):
-    """Create full modeling pipeline"""
-    rf = RandomForestClassifier(**model_params)
- 
-    model = Pipeline(steps=[
+def create_model(preprocessor, algorithm, **model_params):
+    """Create ML pipeline with preprocessor and classifier."""
+    
+    if algorithm == "random_forest":
+        from sklearn.ensemble import RandomForestClassifier
+        classifier = RandomForestClassifier(**model_params)
+    elif algorithm == "xgboost":
+        from xgboost import XGBClassifier
+        classifier = XGBClassifier(**model_params)
+    elif algorithm == "lightgbm":
+        from lightgbm import LGBMClassifier
+        classifier = LGBMClassifier(**model_params)
+    else:
+        raise ValueError(f"Unknown algorithm: {algorithm}")
+    
+    pipeline = Pipeline([
         ('preprocessor', preprocessor),
-        ('classifier', rf)
+        ('classifier', classifier)
     ])
-
-    return model
+    
+    return pipeline
 
 
 def save_model(model, path):

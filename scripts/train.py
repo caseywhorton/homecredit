@@ -23,6 +23,7 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
+from sklearn.model_selection import StratifiedKFold, cross_validate
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -51,6 +52,65 @@ experiment_name = params["experiment_name"]
 # =============================================================================
 # Training Functions
 # =============================================================================
+
+
+def cross_validate_model(model, X, y, cv=5):
+    """
+    Perform stratified cross-validation on the model.
+
+    Args:
+        model: Sklearn pipeline with preprocessor and classifier
+        X: Feature matrix
+        y: Target vector
+        cv: Number of cross-validation folds
+
+    Returns:
+        Dictionary of cross-validation scores
+    """
+    print(f"\nPerforming {cv}-fold cross-validation...")
+
+    # Use stratified K-fold to maintain class balance
+    skf = StratifiedKFold(
+        n_splits=cv, shuffle=True, random_state=101
+    )
+
+    # Define metrics to track
+    scoring = {
+        "roc_auc": "roc_auc",
+        "f1": "f1",
+        "precision": "precision",
+        "recall": "recall",
+        "accuracy": "accuracy",
+    }
+
+    # Run cross-validation
+    cv_results = cross_validate(
+        model,
+        X,
+        y,
+        cv=skf,
+        scoring=scoring,
+        return_train_score=True,
+        n_jobs=-1,  # Use all available cores
+        verbose=1,
+    )
+
+    # Print summary
+    print("\nCross-Validation Results:")
+    print("-" * 60)
+    for metric in ["roc_auc", "f1", "precision", "recall"]:
+        train_mean = cv_results[f"train_{metric}"].mean()
+        train_std = cv_results[f"train_{metric}"].std()
+        test_mean = cv_results[f"test_{metric}"].mean()
+        test_std = cv_results[f"test_{metric}"].std()
+        print(
+            f"  {metric:12s}: "
+            f"Train={train_mean:.3f} (±{train_std:.3f}) | "
+            f"Test={test_mean:.3f} (±{test_std:.3f})"
+        )
+    print("-" * 60)
+
+    return cv_results
 
 
 def train_with_mlflow(
@@ -113,9 +173,36 @@ def train_with_mlflow(
                 )
 
             # Create and train model
-            print("Creating model...")
-            model = create_model(preprocessor, **model_params)
-            print("Fitting model...")
+            print("Creating model with model_params...")
+            model = create_model(preprocessor, algorithm="lightgbm",**model_params)
+
+            # Perform cross-validation
+            if params["train"].get("use_cv", True):
+                cv_folds = params["train"].get("cv_folds", 5)
+                cv_results = cross_validate_model(
+                    model, X_train, y_train, cv=cv_folds
+                )
+
+                # Log CV metrics to MLflow
+                print("Logging cross-validation metrics...")
+                for metric in ["roc_auc", "f1", "precision", "recall"]:
+                    mlflow.log_metric(
+                        f"cv_{metric}_mean",
+                        cv_results[f"test_{metric}"].mean(),
+                    )
+                    mlflow.log_metric(
+                        f"cv_{metric}_std",
+                        cv_results[f"test_{metric}"].std(),
+                    )
+                    mlflow.log_metric(
+                        f"cv_train_{metric}_mean",
+                        cv_results[f"train_{metric}"].mean(),
+                    )
+
+            model = create_model(preprocessor, algorithm="lightgbm", **model_params)
+
+            print("Fitting final model on full training set...")
+
             model.fit(X_train, y_train)
 
             # Make predictions
@@ -321,7 +408,5 @@ def main():
 
 
 if __name__ == "__main__":
-    print("\n" + "*" * 60)
     print(f"Running train.py from {os.getcwd()}")
-    print("*" * 60)
     main()
