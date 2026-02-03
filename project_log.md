@@ -77,3 +77,8 @@ Create a to-do-list.
 
 Added cross validation portion to model training.  
 Log the cross validation mean results to ML flow.  
+
+## Date 2026-02-02
+
+Added a precision recall curve and a chart to examine different threholds.  
+Want to see why a model with a .74 AUC has such a low F1 score.  
