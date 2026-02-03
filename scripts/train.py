@@ -22,7 +22,11 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     roc_curve,
+    precision_recall_curve,
+    average_precision_score,
 )
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold, cross_validate
 
 # Add parent directory to path for imports
@@ -70,9 +74,7 @@ def cross_validate_model(model, X, y, cv=5):
     print(f"\nPerforming {cv}-fold cross-validation...")
 
     # Use stratified K-fold to maintain class balance
-    skf = StratifiedKFold(
-        n_splits=cv, shuffle=True, random_state=101
-    )
+    skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=101)
 
     # Define metrics to track
     scoring = {
@@ -148,40 +150,30 @@ def train_with_mlflow(
 
             # Log training configuration
             print("Logging training config...")
-            mlflow.log_params(
-                {f"train_{k}": v for k, v in params["train"].items()}
-            )
+            mlflow.log_params({f"train_{k}": v for k, v in params["train"].items()})
 
             # Log feature lists
             print("Logging features...")
             if numeric_features:
-                mlflow.log_param(
-                    "numeric_features", ",".join(numeric_features)
-                )
+                mlflow.log_param("numeric_features", ",".join(numeric_features))
             if categorical_features:
                 mlflow.log_param(
                     "categorical_features",
                     ",".join(categorical_features),
                 )
             if ordinal_features:
-                mlflow.log_param(
-                    "ordinal_features", ",".join(ordinal_features)
-                )
+                mlflow.log_param("ordinal_features", ",".join(ordinal_features))
             if flag_features:
-                mlflow.log_param(
-                    "flag_features", ",".join(flag_features)
-                )
+                mlflow.log_param("flag_features", ",".join(flag_features))
 
             # Create and train model
             print("Creating model with model_params...")
-            model = create_model(preprocessor, algorithm="lightgbm",**model_params)
+            model = create_model(preprocessor, algorithm="lightgbm", **model_params)
 
             # Perform cross-validation
             if params["train"].get("use_cv", True):
                 cv_folds = params["train"].get("cv_folds", 5)
-                cv_results = cross_validate_model(
-                    model, X_train, y_train, cv=cv_folds
-                )
+                cv_results = cross_validate_model(model, X_train, y_train, cv=cv_folds)
 
                 # Log CV metrics to MLflow
                 print("Logging cross-validation metrics...")
@@ -221,34 +213,35 @@ def train_with_mlflow(
             print("Logging metrics...")
             mlflow.log_metrics(
                 {
-                    "train_accuracy": accuracy_score(
-                        y_train, y_train_pred
-                    ),
-                    "train_precision": precision_score(
-                        y_train, y_train_pred
-                    ),
-                    "train_recall": recall_score(
-                        y_train, y_train_pred
-                    ),
+                    "train_accuracy": accuracy_score(y_train, y_train_pred),
+                    "train_precision": precision_score(y_train, y_train_pred),
+                    "train_recall": recall_score(y_train, y_train_pred),
                     "train_f1": f1_score(y_train, y_train_pred),
                     "train_auc": train_auc,
-                    "test_accuracy": accuracy_score(
-                        y_test, y_test_pred
-                    ),
-                    "test_precision": precision_score(
-                        y_test, y_test_pred
-                    ),
+                    "test_accuracy": accuracy_score(y_test, y_test_pred),
+                    "test_precision": precision_score(y_test, y_test_pred),
                     "test_recall": recall_score(y_test, y_test_pred),
                     "test_f1": f1_score(y_test, y_test_pred),
                     "test_auc": test_auc,
                 }
             )
 
+            # Find optimal threshold based on F1
+            optimal_threshold, best_f1, threshold_df = _find_optimal_threshold(
+                y_test, y_test_proba
+            )
+
+
             # Create and log ROC curve
             print("Creating ROC curve...")
             _create_and_log_roc_curve(
-                y_train, y_train_proba, y_test, y_test_proba,
-                train_auc, test_auc
+                y_train, y_train_proba, y_test, y_test_proba, train_auc, test_auc
+            )
+
+            # Create and log PR curve and threshold analysis
+            print("Creating PR curve and threshold analysis...")
+            _create_and_log_pr_curve(
+                y_test, y_test_proba, optimal_threshold, threshold_df
             )
 
             # Log model to MLflow
@@ -256,9 +249,7 @@ def train_with_mlflow(
             mlflow.sklearn.log_model(model, "model")
 
             # Save model to artifacts directory for DVC tracking
-            artifacts_dir = (
-                Path(__file__).parent.parent / "artifacts"
-            )
+            artifacts_dir = Path(__file__).parent.parent / "artifacts"
             artifacts_dir.mkdir(exist_ok=True)
 
             model_path = artifacts_dir / "model_classifier.pkl"
@@ -266,10 +257,7 @@ def train_with_mlflow(
 
             print(f"Model saved to: {model_path}")
             print("MLflow run logged successfully")
-            print(
-                f"Train AUC: {train_auc:.3f}, "
-                f"Test AUC: {test_auc:.3f}"
-            )
+            print(f"Train AUC: {train_auc:.3f}, " f"Test AUC: {test_auc:.3f}")
 
         except Exception as e:
             print(f"Error in training process: {e}")
@@ -279,8 +267,7 @@ def train_with_mlflow(
 
 
 def _create_and_log_roc_curve(
-    y_train, y_train_proba, y_test, y_test_proba,
-    train_auc, test_auc
+    y_train, y_train_proba, y_test, y_test_proba, train_auc, test_auc
 ):
     """
     Create ROC curve visualization and log to MLflow.
@@ -324,13 +311,124 @@ def _create_and_log_roc_curve(
     plt.tight_layout()
 
     # Save and log the figure
-    roc_path = "/".join(
-        (params["filepath"]["model_artifact_dir"], "roc_curve.png")
-    )
+    roc_path = "/".join((params["filepath"]["model_artifact_dir"], "roc_curve.png"))
     plt.savefig(roc_path)
     mlflow.log_artifact(roc_path)
     plt.close()
     print("ROC curve logged to MLflow")
+
+
+def _find_optimal_threshold(y_true, y_proba):
+    """
+    Find optimal classification threshold by maximizing F1 score
+    using thresholds from the precision-recall curve.
+
+    Args:
+        y_true: True binary labels
+        y_proba: Predicted probabilities
+
+    Returns:
+        Tuple of (optimal_threshold, best_f1, results_df)
+    """
+    # Use thresholds from PR curve directly
+    precision, recall, thresholds = precision_recall_curve(y_true, y_proba)
+
+    # precision/recall have one extra element vs thresholds
+    # trim to match
+    precision = precision[:-1]
+    recall = recall[:-1]
+
+    # Calculate F1 at each PR curve threshold
+    # F1 = 2 * (precision * recall) / (precision + recall)
+    denom = precision + recall
+    f1_scores = np.where(
+        denom > 0,
+        2 * (precision * recall) / denom,
+        0.0,
+    )
+
+    # Build results dataframe
+    results_df = pd.DataFrame(
+        {
+            "threshold": thresholds,
+            "precision": precision,
+            "recall": recall,
+            "f1": f1_scores,
+        }
+    )
+
+    best_idx = np.argmax(f1_scores)
+    optimal_threshold = thresholds[best_idx]
+    best_f1 = f1_scores[best_idx]
+
+    return optimal_threshold, best_f1, results_df
+
+
+def _create_and_log_pr_curve(y_test, y_test_proba, optimal_threshold, results_df):
+    """
+    Create PR curve and threshold analysis plots, log to MLflow.
+
+    Args:
+        y_test: True test labels
+        y_test_proba: Predicted probabilities for test set
+        optimal_threshold: Optimal classification threshold
+        results_df: DataFrame of threshold analysis results
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    # --- Plot 1: Precision-Recall Curve ---
+    precision, recall, _ = precision_recall_curve(y_test, y_test_proba)
+    ap_score = average_precision_score(y_test, y_test_proba)
+
+    axes[0].plot(recall, precision, linewidth=2, color="tab:blue")
+    axes[0].set_xlabel("Recall", fontsize=12)
+    axes[0].set_ylabel("Precision", fontsize=12)
+    axes[0].set_title(f"Precision-Recall Curve (AP = {ap_score:.3f})", fontsize=14)
+    axes[0].grid(alpha=0.3)
+
+    # --- Plot 2: Threshold Analysis ---
+    axes[1].plot(
+        results_df["threshold"],
+        results_df["f1"],
+        label="F1",
+        linewidth=2,
+        color="tab:blue",
+    )
+    axes[1].plot(
+        results_df["threshold"],
+        results_df["precision"],
+        label="Precision",
+        linewidth=2,
+        color="tab:orange",
+    )
+    axes[1].plot(
+        results_df["threshold"],
+        results_df["recall"],
+        label="Recall",
+        linewidth=2,
+        color="tab:green",
+    )
+    axes[1].axvline(
+        x=optimal_threshold,
+        color="red",
+        linestyle="--",
+        linewidth=1.5,
+        label=f"Optimal ({optimal_threshold})",
+    )
+    axes[1].set_xlabel("Threshold", fontsize=12)
+    axes[1].set_ylabel("Score", fontsize=12)
+    axes[1].set_title("Threshold Analysis", fontsize=14)
+    axes[1].legend(loc="center right", fontsize=10)
+    axes[1].grid(alpha=0.3)
+
+    plt.tight_layout()
+
+    # Save and log
+    pr_path = "/".join((params["filepath"]["model_artifact_dir"], "pr_curve.png"))
+    plt.savefig(pr_path)
+    mlflow.log_artifact(str(pr_path))
+    plt.close()
+    print("PR curve and threshold analysis logged to MLflow")
 
 
 # =============================================================================
@@ -347,34 +445,21 @@ def main():
     print("=" * 60 + "\n")
 
     # Load main application data
-    print(
-        f"Loading data from: {params['filepath']['source_data']}"
-    )
-    data_path = (
-        Path(__file__).parent.parent
-        / params["filepath"]["source_data"]
-    )
+    print(f"Loading data from: {params['filepath']['source_data']}")
+    data_path = Path(__file__).parent.parent / params["filepath"]["source_data"]
     df = pd.read_csv(data_path)
     print(f"   Shape: {df.shape}")
 
     # Load credit card balance data
-    print(
-        f"Loading data from: "
-        f"{params['filepath']['source_data_cc']}"
-    )
-    cc_path = (
-        Path(__file__).parent.parent
-        / params["filepath"]["source_data_cc"]
-    )
+    print(f"Loading data from: " f"{params['filepath']['source_data_cc']}")
+    cc_path = Path(__file__).parent.parent / params["filepath"]["source_data_cc"]
     cc = pd.read_csv(cc_path)
     print(f"   Shape: {cc.shape}")
 
     # Prepare features and create train/test split
     print("\nPreparing data...")
     X_train, X_test, y_train, y_test = prepare_data(df, cc)
-    print(
-        f"   Train: {X_train.shape}, Test: {X_test.shape}"
-    )
+    print(f"   Train: {X_train.shape}, Test: {X_test.shape}")
 
     # Create preprocessing pipeline
     print("\nCreating preprocessor...")
