@@ -7,7 +7,7 @@ filepath:
   preprocessor_sink: ../artifacts/preprocessor.pkl  # Add this
 
 # experiment name for mlflow
-experiment_name: homecredit-default-11102025-v3
+experiment_name: homecredit-feature-selection
 tuning_experiment_name: "hyperparameter_tuning_v1" 
 
 
@@ -43,42 +43,38 @@ features:
     - AMT_INCOME_TOTAL
     - AMT_CREDIT
     - AMT_GOODS_PRICE
-    - YEARS_EMPLOYED
-    - UTILIZATION
-    - MAX_UTILIZATION
+    # - YEARS_EMPLOYED
+    # - UTILIZATION
+    # - MAX_UTILIZATION
     - EXT_SOURCE_1
     - EXT_SOURCE_2
     - EXT_SOURCE_3
-    - MOB
-    - AMT_PRIN_BAL_PAY_AVG
-    - MAX_INSTALL
+    # - MOB
+    # - AMT_PRIN_BAL_PAY_AVG
+    # - MAX_INSTALL
   categorical:  
-    - EMPLOYMENT_BKT
-    - OCCUPATION_TYPE
-    - NAME_EDUCATION_TYPE
-    - FLAG_OWN_CAR
-    - FLAG_OWN_REALTY
-    - FLAG_MOBIL
-    - FLAG_EMP_PHONE
-    - FLAG_WORK_PHONE
-    - FLAG_CONT_MOBILE
-    - FLAG_PHONE
-    - FLAG_EMAIL
-    - REG_REGION_NOT_LIVE_REGION
-    - REG_REGION_NOT_WORK_REGION
-    - LIVE_REGION_NOT_WORK_REGION
-    - REG_CITY_NOT_LIVE_CITY
-    - REG_CITY_NOT_WORK_CITY
-    - LIVE_CITY_NOT_WORK_CITY
-    - MAX_DPD_IND
+    # - EMPLOYMENT_BKT
+    # - OCCUPATION_TYPE
+    # - NAME_EDUCATION_TYPE
+    # - FLAG_OWN_CAR
+    # - FLAG_OWN_REALTY
+    # - FLAG_MOBIL
+    # - FLAG_EMP_PHONE
+    # - FLAG_WORK_PHONE
+    # - FLAG_CONT_MOBILE
+    # - FLAG_PHONE
+    # - FLAG_EMAIL
+    # - REG_REGION_NOT_LIVE_REGION
+    # - REG_REGION_NOT_WORK_REGION
+    # - LIVE_REGION_NOT_WORK_REGION
+    # - REG_CITY_NOT_LIVE_CITY
+    # - REG_CITY_NOT_WORK_CITY
+    # - LIVE_CITY_NOT_WORK_CITY
+    # - MAX_DPD_IND
 #    - MIN_PAY_IND
 #    - MIN_PAY_2P5_IND
   ordinal:
-    - CNT_CHILDREN
-    - CNT_FAM_MEMBERS
-    
-
-
-  #flag:
+    # - CNT_CHILDREN
+    # - CNT_FAM_MEMBERS
     
   
