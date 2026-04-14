@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Credit Risk Inference</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:        #0a0a0a;
+      --surface:   #111111;
+      --border:    #222222;
+      --border-hi: #333333;
+      --text:      #e8e8e8;
+      --muted:     #555555;
+      --accent:    #c8f135;
+      --danger:    #ff4444;
+      --safe:      #c8f135;
+      --mono:      'IBM Plex Mono', monospace;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 80px;
+    }
+
+    /* subtle scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255,255,255,0.012) 2px,
+        rgba(255,255,255,0.012) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    header {
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 48px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: clamp(22px, 4vw, 30px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--text);
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 10px;
+      font-weight: 300;
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 640px;
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 36px;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    form {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .field:first-child { border-top: 1px solid var(--border); }
+
+    .field:hover { background: rgba(255,255,255,0.02); }
+
+    .field:focus-within {
+      background: rgba(200, 241, 53, 0.03);
+      border-bottom-color: var(--accent);
+    }
+
+    label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 16px 20px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .field:focus-within label { color: var(--accent); }
+
+    input[type="number"] {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 400;
+      padding: 16px 20px;
+      text-align: right;
+      width: 100%;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]::placeholder { color: var(--border-hi); }
+
+    .actions {
+      margin-top: 32px;
+      display: flex;
+      gap: 12px;
+      animation: fadeUp 0.5s 0.3s ease both;
+    }
+
+    button {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      padding: 14px 28px;
+      transition: all 0.15s;
+    }
+
+    #submitBtn {
+      background: var(--accent);
+      color: #0a0a0a;
+      flex: 1;
+    }
+
+    #submitBtn:hover { background: #d4f54a; transform: translateY(-1px); }
+    #submitBtn:active { transform: translateY(0); }
+    #submitBtn:disabled { background: var(--border-hi); color: var(--muted); cursor: not-allowed; transform: none; }
+
+    #clearBtn {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    #clearBtn:hover { border-color: var(--border-hi); color: var(--text); }
+
+    /* Result panel */
+    #result {
+      width: 100%;
+      max-width: 640px;
+      margin-top: 40px;
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .result-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .verdict {
+      font-size: clamp(32px, 6vw, 48px);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .verdict.low  { color: var(--safe); }
+    .verdict.high { color: var(--danger); }
+
+    .verdict-sub {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Probability bar */
+    .prob-bar-wrap {
+      margin: 28px 0;
+    }
+
+    .prob-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .prob-bar-track {
+      height: 4px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prob-bar-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .prob-bar-fill.low  { background: var(--safe); }
+    .prob-bar-fill.high { background: var(--danger); }
+
+    .threshold-marker {
+      position: absolute;
+      top: -4px;
+      width: 1px;
+      height: 12px;
+      background: var(--muted);
+    }
+
+    .threshold-marker::after {
+      content: attr(data-label);
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: var(--muted);
+      white-space: nowrap;
+      letter-spacing: 0.05em;
+    }
+
+    /* Feature breakdown */
+    .breakdown-title {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .breakdown-grid {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--border);
+    }
+
+    .breakdown-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .breakdown-row.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .breakdown-key {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .breakdown-type {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--border-hi);
+      margin-top: 2px;
+    }
+
+    .breakdown-val {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      text-align: right;
+    }
+
+    /* Error state */
+    .error-box {
+      background: rgba(255, 68, 68, 0.06);
+      border: 1px solid rgba(255, 68, 68, 0.2);
+      padding: 16px 20px;
+      font-size: 12px;
+      color: var(--danger);
+      display: none;
+      margin-top: 20px;
+      animation: fadeUp 0.3s ease both;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(10,10,10,0.3);
+      border-top-color: #0a0a0a;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="eyebrow">Home Credit — Risk Model v1</div>
+    <h1>Credit <span>Default</span><br/>Risk Scorer</h1>
+    <p class="subtitle">Submit applicant financials to receive a default risk prediction.</p>
+  </header>
+
+  <div class="divider"></div>
+
+  <form id="inferenceForm" autocomplete="off">
+    <div class="field">
+      <label for="AMT_ANNUITY">Annuity Amount</label>
+      <input type="number" id="AMT_ANNUITY" name="AMT_ANNUITY" placeholder="0.00" step="any" required />
+    </div>
+    <div class="field">
+      <label for="AMT_INCOME_TOTAL">Total Income</label>
+      <input type="number" id="AMT_INCOME_TOTAL" name="AMT_INCOME_TOTAL" placeholder="0.00" step="any" required />
+    </div>
+    <div class="field">
+      <label for="AMT_CREDIT">Credit Amount</label>
+      <input type="number" id="AMT_CREDIT" name="AMT_CREDIT" placeholder="0.00" step="any" required />
+    </div>
+    <div class="field">
+      <label for="AMT_GOODS_PRICE">Goods Price</label>
+      <input type="number" id="AMT_GOODS_PRICE" name="AMT_GOODS_PRICE" placeholder="0.00" step="any" required />
+    </div>
+    <div class="field">
+      <label for="EXT_SOURCE_1">Ext. Source 1</label>
+      <input type="number" id="EXT_SOURCE_1" name="EXT_SOURCE_1" placeholder="0.000" step="any" required />
+    </div>
+    <div class="field">
+      <label for="EXT_SOURCE_2">Ext. Source 2</label>
+      <input type="number" id="EXT_SOURCE_2" name="EXT_SOURCE_2" placeholder="0.000" step="any" required />
+    </div>
+    <div class="field">
+      <label for="EXT_SOURCE_3">Ext. Source 3</label>
+      <input type="number" id="EXT_SOURCE_3" name="EXT_SOURCE_3" placeholder="0.000" step="any" required />
+    </div>
+  </form>
+
+  <div class="actions">
+    <button type="button" id="submitBtn" onclick="submitForm()">Run Inference</button>
+    <button type="button" id="clearBtn" onclick="clearForm()">Clear</button>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div id="result">
+    <div class="result-header">
+      <div>
+        <div class="result-label">Risk Assessment</div>
+        <div class="verdict" id="verdictText">—</div>
+        <div class="verdict-sub" id="verdictSub"></div>
+      </div>
+    </div>
+
+    <div class="prob-bar-wrap">
+      <div class="prob-bar-labels">
+        <span>Default Probability</span>
+        <span id="probLabel">—</span>
+      </div>
+      <div class="prob-bar-track">
+        <div class="prob-bar-fill" id="probFill"></div>
+        <div class="threshold-marker" id="thresholdMarker"></div>
+      </div>
+    </div>
+
+    <div class="breakdown-title">Feature Breakdown</div>
+    <div class="breakdown-grid" id="breakdownGrid"></div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:5001';
+
+    async function submitForm() {
+      const btn = document.getElementById('submitBtn');
+      const errorBox = document.getElementById('errorBox');
+
+      // Gather values
+      const fields = ['AMT_ANNUITY','AMT_INCOME_TOTAL','AMT_CREDIT','AMT_GOODS_PRICE','EXT_SOURCE_1','EXT_SOURCE_2','EXT_SOURCE_3'];
+      const payload = {};
+      for (const f of fields) {
+        const val = document.getElementById(f).value;
+        if (val === '') {
+          showError(`Please fill in all fields. Missing: ${f}`);
+          return;
+        }
+        payload[f] = parseFloat(val);
+      }
+
+      // Loading state
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Scoring...';
+      errorBox.style.display = 'none';
+      document.getElementById('result').style.display = 'none';
+
+      try {
+        const res = await fetch(`${API}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Inference failed.');
+          return;
+        }
+
+        renderResult(data);
+
+      } catch (err) {
+        showError(`Could not reach API at ${API}. Is the Flask server running?`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Run Inference';
+      }
+    }
+
+    function renderResult(data) {
+      const { prediction, probability, threshold, feature_breakdown } = data;
+      const isHigh = prediction === 1;
+      const pct = (probability * 100).toFixed(1);
+      const threshPct = (threshold * 100).toFixed(1);
+
+      // Verdict
+      const verdictEl = document.getElementById('verdictText');
+      const subEl = document.getElementById('verdictSub');
+      verdictEl.className = `verdict ${isHigh ? 'high' : 'low'}`;
+      verdictEl.textContent = isHigh ? 'HIGH RISK' : 'LOW RISK';
+      subEl.textContent = `Prediction: ${prediction}  ·  Threshold: ${threshold}`;
+
+      // Probability bar
+      document.getElementById('probLabel').textContent = `${pct}%`;
+      const fill = document.getElementById('probFill');
+      fill.className = `prob-bar-fill ${isHigh ? 'high' : 'low'}`;
+      setTimeout(() => { fill.style.width = `${pct}%`; }, 50);
+
+      // Threshold marker
+      const marker = document.getElementById('thresholdMarker');
+      marker.style.left = `${threshPct}%`;
+      marker.setAttribute('data-label', `threshold ${threshPct}%`);
+
+      // Feature breakdown
+      const grid = document.getElementById('breakdownGrid');
+      grid.innerHTML = '';
+      Object.entries(feature_breakdown).forEach(([key, info], i) => {
+        const row = document.createElement('div');
+        row.className = 'breakdown-row';
+        row.innerHTML = `
+          <div>
+            <div class="breakdown-key">${key}</div>
+            <div class="breakdown-type">${info.type}</div>
+          </div>
+          <div class="breakdown-val">${formatVal(info.value)}</div>
+        `;
+        grid.appendChild(row);
+        setTimeout(() => row.classList.add('visible'), 80 + i * 60);
+      });
+
+      // Show result
+      const resultEl = document.getElementById('result');
+      resultEl.style.display = 'block';
+      resultEl.style.animation = 'none';
+      void resultEl.offsetWidth;
+      resultEl.style.animation = 'fadeUp 0.4s ease both';
+    }
+
+    function formatVal(val) {
+      if (typeof val === 'number') {
+        return val % 1 === 0
+          ? val.toLocaleString()
+          : val < 1 ? val.toFixed(3) : val.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      }
+      return val;
+    }
+
+    function showError(msg) {
+      const box = document.getElementById('errorBox');
+      box.textContent = `ERROR: ${msg}`;
+      box.style.display = 'block';
+    }
+
+    function clearForm() {
+      ['AMT_ANNUITY','AMT_INCOME_TOTAL','AMT_CREDIT','AMT_GOODS_PRICE','EXT_SOURCE_1','EXT_SOURCE_2','EXT_SOURCE_3']
+        .forEach(f => document.getElementById(f).value = '');
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('errorBox').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
