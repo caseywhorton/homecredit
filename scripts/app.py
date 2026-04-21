@@ -12,6 +12,7 @@ from flask_cors import CORS
 import pandas as pd
 import numpy as np
 import yaml
+import shap
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -59,24 +60,11 @@ def health():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    """
-    Run inference on a single row of data.
-
-    Expected JSON payload:
-    {
-        "FEATURE_1": value,
-        "FEATURE_2": value,
-        ...
-    }
-
-    Returns prediction, probability, and per-feature breakdown.
-    """
     data = request.get_json()
 
     if not data:
         return jsonify({"error": "No JSON payload provided"}), 400
 
-    # Validate all expected features are present
     missing = [f for f in expected_features if f not in data]
     if missing:
         return (
@@ -90,20 +78,35 @@ def predict():
             400,
         )
 
-    # Build input dataframe with only the expected features in the right order
     try:
         X = pd.DataFrame([{f: data[f] for f in expected_features}])
     except Exception as e:
         return jsonify({"error": f"Failed to construct feature matrix: {str(e)}"}), 400
 
-    # Run inference
     try:
         probability = float(model.predict_proba(X)[:, 1][0])
         prediction = int(probability >= threshold)
     except Exception as e:
         return jsonify({"error": f"Inference failed: {str(e)}"}), 500
 
-    # Build per-feature breakdown
+    # SHAP values
+    try:
+        explainer = shap.TreeExplainer(model.named_steps["classifier"])
+        X_transformed = model.named_steps["preprocessor"].transform(X)
+        shap_values = explainer.shap_values(X_transformed)
+
+        if isinstance(shap_values, list):
+            sv = shap_values[1][0]
+        else:
+            sv = shap_values[0]
+
+        shap_breakdown = {
+            feature: round(float(sv[i]), 4)
+            for i, feature in enumerate(expected_features)
+        }
+    except Exception as e:
+        shap_breakdown = {"error": f"SHAP failed: {str(e)}"}
+
     feature_breakdown = {
         feature: {"value": data[feature], "type": _get_feature_type(feature)}
         for feature in expected_features
@@ -115,6 +118,7 @@ def predict():
             "probability": round(probability, 4),
             "threshold": threshold,
             "feature_breakdown": feature_breakdown,
+            "shap_breakdown": shap_breakdown,
         }
     )
 

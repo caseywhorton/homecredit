@@ -7,17 +7,25 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --bg:        #0a0a0a;
-      --surface:   #111111;
-      --border:    #222222;
-      --border-hi: #333333;
-      --text:      #e8e8e8;
-      --muted:     #555555;
-      --accent:    #c8f135;
-      --danger:    #ff4444;
-      --safe:      #c8f135;
-      --mono:      'IBM Plex Mono', monospace;
-      --sans:      'IBM Plex Sans', sans-serif;
+      --bg:           #e8f2fb;
+      --surface:      #ffffff;
+      --border:       #c8ddef;
+      --border-hi:    #a8c8e8;
+      --text:         #1a2a3a;
+      --text-label:   #4a6a8a;
+      --text-muted:   #7a9ab8;
+      --accent:       #1a6bb5;
+      --accent-light: #daeaf8;
+      --accent-focus: #e4f0fb;
+      --input-val:    #000000;
+      --danger:       #cc2222;
+      --safe:         #1a6bb5;
+      --push:         #ff6b6b;
+      --pull:         #2eb87a;
+      --shap-bg:      #ffffff;
+      --shap-grid:    #f0f4f8;
+      --mono:         'IBM Plex Mono', monospace;
+      --sans:         'IBM Plex Sans', sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,25 +41,9 @@
       padding: 48px 24px 80px;
     }
 
-    /* subtle scanline overlay */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(255,255,255,0.012) 2px,
-        rgba(255,255,255,0.012) 4px
-      );
-      pointer-events: none;
-      z-index: 100;
-    }
-
     header {
       width: 100%;
-      max-width: 640px;
+      max-width: 700px;
       margin-bottom: 48px;
       animation: fadeUp 0.5s ease both;
     }
@@ -60,7 +52,7 @@
       font-size: 10px;
       letter-spacing: 0.25em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--text-muted);
       margin-bottom: 10px;
     }
 
@@ -72,33 +64,31 @@
       color: var(--text);
     }
 
-    h1 span {
-      color: var(--accent);
-    }
+    h1 span { color: var(--accent); }
 
     .subtitle {
       font-family: var(--sans);
       font-size: 13px;
-      color: var(--muted);
+      color: var(--text-muted);
       margin-top: 10px;
       font-weight: 300;
     }
 
     .divider {
       width: 100%;
-      max-width: 640px;
+      max-width: 700px;
       height: 1px;
       background: var(--border);
       margin-bottom: 36px;
       animation: fadeUp 0.5s 0.1s ease both;
     }
 
+    /* ── Form ── */
     form {
       width: 100%;
-      max-width: 640px;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+      max-width: 700px;
+      background: var(--surface);
+      border: 1px solid var(--border);
       animation: fadeUp 0.5s 0.2s ease both;
     }
 
@@ -110,12 +100,11 @@
       transition: background 0.15s;
     }
 
-    .field:first-child { border-top: 1px solid var(--border); }
-
-    .field:hover { background: rgba(255,255,255,0.02); }
+    .field:last-child { border-bottom: none; }
+    .field:hover { background: var(--accent-light); }
 
     .field:focus-within {
-      background: rgba(200, 241, 53, 0.03);
+      background: var(--accent-focus);
       border-bottom-color: var(--accent);
     }
 
@@ -123,7 +112,7 @@
       font-size: 11px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--text-label);
       padding: 16px 20px;
       font-weight: 500;
       transition: color 0.15s;
@@ -135,10 +124,10 @@
       background: transparent;
       border: none;
       outline: none;
-      color: var(--text);
+      color: var(--input-val);
       font-family: var(--mono);
       font-size: 14px;
-      font-weight: 400;
+      font-weight: 500;
       padding: 16px 20px;
       text-align: right;
       width: 100%;
@@ -147,13 +136,15 @@
 
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
-
     input[type="number"]::placeholder { color: var(--border-hi); }
 
+    /* ── Actions ── */
     .actions {
-      margin-top: 32px;
+      margin-top: 20px;
       display: flex;
       gap: 12px;
+      width: 100%;
+      max-width: 700px;
       animation: fadeUp 0.5s 0.3s ease both;
     }
 
@@ -171,88 +162,81 @@
 
     #submitBtn {
       background: var(--accent);
-      color: #0a0a0a;
+      color: #ffffff;
       flex: 1;
     }
 
-    #submitBtn:hover { background: #d4f54a; transform: translateY(-1px); }
+    #submitBtn:hover { background: #155fa0; transform: translateY(-1px); }
     #submitBtn:active { transform: translateY(0); }
-    #submitBtn:disabled { background: var(--border-hi); color: var(--muted); cursor: not-allowed; transform: none; }
+    #submitBtn:disabled { background: var(--border-hi); color: #fff; cursor: not-allowed; transform: none; }
 
     #clearBtn {
       background: transparent;
-      color: var(--muted);
+      color: var(--text-muted);
       border: 1px solid var(--border);
     }
 
-    #clearBtn:hover { border-color: var(--border-hi); color: var(--text); }
+    #clearBtn:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* Result panel */
+    /* ── Result Panel ── */
     #result {
       width: 100%;
-      max-width: 640px;
+      max-width: 700px;
       margin-top: 40px;
       display: none;
-      animation: fadeUp 0.4s ease both;
     }
 
-    .result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
+    .result-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
     }
 
-    .result-label {
+    .result-cell {
+      background: var(--surface);
+      padding: 24px;
+    }
+
+    .cell-label {
       font-size: 10px;
-      letter-spacing: 0.25em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--text-muted);
+      margin-bottom: 10px;
     }
 
-    .verdict {
-      font-size: clamp(32px, 6vw, 48px);
+    .cell-value {
+      font-size: 36px;
       font-weight: 600;
       letter-spacing: -0.03em;
       line-height: 1;
     }
 
-    .verdict.low  { color: var(--safe); }
-    .verdict.high { color: var(--danger); }
+    .cell-value.low  { color: var(--safe); }
+    .cell-value.high { color: var(--danger); }
+    .cell-value.prob { color: var(--text); }
 
-    .verdict-sub {
+    .cell-sub {
       font-family: var(--sans);
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    /* Probability bar */
-    .prob-bar-wrap {
-      margin: 28px 0;
-    }
-
-    .prob-bar-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
     }
 
     .prob-bar-track {
-      height: 4px;
+      height: 3px;
       background: var(--border);
+      margin-top: 16px;
       position: relative;
-      overflow: hidden;
     }
 
     .prob-bar-fill {
       height: 100%;
       width: 0%;
-      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: width 0.9s cubic-bezier(0.16,1,0.3,1);
     }
 
     .prob-bar-fill.low  { background: var(--safe); }
@@ -260,95 +244,173 @@
 
     .threshold-marker {
       position: absolute;
-      top: -4px;
+      top: -5px;
       width: 1px;
-      height: 12px;
-      background: var(--muted);
+      height: 13px;
+      background: var(--text-muted);
     }
 
     .threshold-marker::after {
       content: attr(data-label);
       position: absolute;
-      top: 14px;
+      top: 16px;
       left: 50%;
       transform: translateX(-50%);
       font-size: 9px;
-      color: var(--muted);
+      color: var(--text-muted);
       white-space: nowrap;
-      letter-spacing: 0.05em;
     }
 
-    /* Feature breakdown */
-    .breakdown-title {
+    /* ── Section titles ── */
+    .section-title {
       font-size: 10px;
       letter-spacing: 0.25em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .breakdown-grid {
+    /* ── SHAP Waterfall ── */
+    .shap-section {
+      background: var(--shap-bg);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .shap-legend {
       display: flex;
-      flex-direction: column;
-      border-top: 1px solid var(--border);
+      gap: 24px;
+      margin-bottom: 24px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+
+    .legend-dot { width: 10px; height: 10px; border-radius: 1px; }
+    .legend-dot.push { background: var(--push); }
+    .legend-dot.pull { background: var(--pull); }
+
+    .shap-row {
+      display: grid;
+      grid-template-columns: 160px 1fr 80px;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 10px;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .shap-row.visible { opacity: 1; transform: translateX(0); }
+
+    .shap-feature {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--text-label);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .shap-bar-wrap {
+      position: relative;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      /* pale grey vertical grid lines */
+      background-image: repeating-linear-gradient(
+        90deg,
+        var(--shap-grid) 0px,
+        var(--shap-grid) 1px,
+        transparent 1px,
+        transparent 25%
+      );
+    }
+
+    /* center axis */
+    .shap-bar-wrap::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--border-hi);
+      z-index: 1;
+    }
+
+    .shap-bar {
+      position: absolute;
+      height: 16px;
+      border-radius: 2px;
+      width: 0%;
+      z-index: 2;
+      transition: width 0.7s cubic-bezier(0.16,1,0.3,1),
+                  left  0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .shap-bar.push { background: var(--push); opacity: 0.85; }
+    .shap-bar.pull { background: var(--pull); opacity: 0.85; }
+
+    .shap-val {
+      font-size: 12px;
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .shap-val.push { color: var(--push); }
+    .shap-val.pull { color: var(--pull); }
+
+    /* ── Feature breakdown ── */
+    .breakdown-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 24px;
     }
 
     .breakdown-row {
       display: grid;
       grid-template-columns: 1fr auto;
-      align-items: center;
-      padding: 12px 0;
+      padding: 11px 0;
       border-bottom: 1px solid var(--border);
       opacity: 0;
-      transform: translateX(-8px);
+      transform: translateX(-6px);
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
-    .breakdown-row.visible {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    .breakdown-row:first-child { border-top: 1px solid var(--border); }
+    .breakdown-row:last-child { border-bottom: none; }
+    .breakdown-row.visible { opacity: 1; transform: translateX(0); }
 
-    .breakdown-key {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.05em;
-    }
+    .breakdown-key { font-size: 11px; color: var(--text-label); }
+    .breakdown-type { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+    .breakdown-val { font-size: 13px; font-weight: 600; color: var(--input-val); }
 
-    .breakdown-type {
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--border-hi);
-      margin-top: 2px;
-    }
-
-    .breakdown-val {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      text-align: right;
-    }
-
-    /* Error state */
+    /* ── Error ── */
     .error-box {
-      background: rgba(255, 68, 68, 0.06);
-      border: 1px solid rgba(255, 68, 68, 0.2);
+      background: rgba(204,34,34,0.05);
+      border: 1px solid rgba(204,34,34,0.25);
       padding: 16px 20px;
       font-size: 12px;
       color: var(--danger);
       display: none;
-      margin-top: 20px;
-      animation: fadeUp 0.3s ease both;
+      margin-top: 16px;
+      width: 100%;
+      max-width: 700px;
     }
 
-    /* Loading spinner */
     .spinner {
       display: inline-block;
-      width: 12px;
-      height: 12px;
-      border: 2px solid rgba(10,10,10,0.3);
-      border-top-color: #0a0a0a;
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
       margin-right: 8px;
@@ -367,7 +429,7 @@
   <header>
     <div class="eyebrow">Home Credit — Risk Model v1</div>
     <h1>Credit <span>Default</span><br/>Risk Scorer</h1>
-    <p class="subtitle">Submit applicant financials to receive a default risk prediction.</p>
+    <p class="subtitle">Submit applicant financials to receive a default risk prediction with feature-level SHAP explanation.</p>
   </header>
 
   <div class="divider"></div>
@@ -375,31 +437,31 @@
   <form id="inferenceForm" autocomplete="off">
     <div class="field">
       <label for="AMT_ANNUITY">Annuity Amount</label>
-      <input type="number" id="AMT_ANNUITY" name="AMT_ANNUITY" placeholder="0.00" step="any" required />
+      <input type="number" id="AMT_ANNUITY" placeholder="0.00" step="any" required />
     </div>
     <div class="field">
       <label for="AMT_INCOME_TOTAL">Total Income</label>
-      <input type="number" id="AMT_INCOME_TOTAL" name="AMT_INCOME_TOTAL" placeholder="0.00" step="any" required />
+      <input type="number" id="AMT_INCOME_TOTAL" placeholder="0.00" step="any" required />
     </div>
     <div class="field">
       <label for="AMT_CREDIT">Credit Amount</label>
-      <input type="number" id="AMT_CREDIT" name="AMT_CREDIT" placeholder="0.00" step="any" required />
+      <input type="number" id="AMT_CREDIT" placeholder="0.00" step="any" required />
     </div>
     <div class="field">
       <label for="AMT_GOODS_PRICE">Goods Price</label>
-      <input type="number" id="AMT_GOODS_PRICE" name="AMT_GOODS_PRICE" placeholder="0.00" step="any" required />
+      <input type="number" id="AMT_GOODS_PRICE" placeholder="0.00" step="any" required />
     </div>
     <div class="field">
       <label for="EXT_SOURCE_1">Ext. Source 1</label>
-      <input type="number" id="EXT_SOURCE_1" name="EXT_SOURCE_1" placeholder="0.000" step="any" required />
+      <input type="number" id="EXT_SOURCE_1" placeholder="0.000" step="any" required />
     </div>
     <div class="field">
       <label for="EXT_SOURCE_2">Ext. Source 2</label>
-      <input type="number" id="EXT_SOURCE_2" name="EXT_SOURCE_2" placeholder="0.000" step="any" required />
+      <input type="number" id="EXT_SOURCE_2" placeholder="0.000" step="any" required />
     </div>
     <div class="field">
       <label for="EXT_SOURCE_3">Ext. Source 3</label>
-      <input type="number" id="EXT_SOURCE_3" name="EXT_SOURCE_3" placeholder="0.000" step="any" required />
+      <input type="number" id="EXT_SOURCE_3" placeholder="0.000" step="any" required />
     </div>
   </form>
 
@@ -411,49 +473,55 @@
   <div class="error-box" id="errorBox"></div>
 
   <div id="result">
-    <div class="result-header">
-      <div>
-        <div class="result-label">Risk Assessment</div>
-        <div class="verdict" id="verdictText">—</div>
-        <div class="verdict-sub" id="verdictSub"></div>
+
+    <div class="result-top">
+      <div class="result-cell">
+        <div class="cell-label">Risk Assessment</div>
+        <div class="cell-value" id="verdictText">—</div>
+        <div class="cell-sub" id="verdictSub"></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-label">Default Probability</div>
+        <div class="cell-value prob" id="probText">—</div>
+        <div class="prob-bar-track">
+          <div class="prob-bar-fill" id="probFill"></div>
+          <div class="threshold-marker" id="thresholdMarker"></div>
+        </div>
+        <div class="cell-sub" id="probSub"></div>
       </div>
     </div>
 
-    <div class="prob-bar-wrap">
-      <div class="prob-bar-labels">
-        <span>Default Probability</span>
-        <span id="probLabel">—</span>
+    <div class="shap-section">
+      <div class="section-title">SHAP Feature Contributions</div>
+      <div class="shap-legend">
+        <div class="legend-item"><div class="legend-dot push"></div>Pushes toward default</div>
+        <div class="legend-item"><div class="legend-dot pull"></div>Pushes away from default</div>
       </div>
-      <div class="prob-bar-track">
-        <div class="prob-bar-fill" id="probFill"></div>
-        <div class="threshold-marker" id="thresholdMarker"></div>
-      </div>
+      <div id="shapGrid"></div>
     </div>
 
-    <div class="breakdown-title">Feature Breakdown</div>
-    <div class="breakdown-grid" id="breakdownGrid"></div>
+    <div class="breakdown-section">
+      <div class="section-title">Input Feature Values</div>
+      <div id="breakdownGrid"></div>
+    </div>
+
   </div>
 
   <script>
     const API = 'http://localhost:5001';
+    const FIELDS = ['AMT_ANNUITY','AMT_INCOME_TOTAL','AMT_CREDIT','AMT_GOODS_PRICE','EXT_SOURCE_1','EXT_SOURCE_2','EXT_SOURCE_3'];
 
     async function submitForm() {
       const btn = document.getElementById('submitBtn');
       const errorBox = document.getElementById('errorBox');
 
-      // Gather values
-      const fields = ['AMT_ANNUITY','AMT_INCOME_TOTAL','AMT_CREDIT','AMT_GOODS_PRICE','EXT_SOURCE_1','EXT_SOURCE_2','EXT_SOURCE_3'];
       const payload = {};
-      for (const f of fields) {
+      for (const f of FIELDS) {
         const val = document.getElementById(f).value;
-        if (val === '') {
-          showError(`Please fill in all fields. Missing: ${f}`);
-          return;
-        }
+        if (val === '') { showError(`Missing value for: ${f}`); return; }
         payload[f] = parseFloat(val);
       }
 
-      // Loading state
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Scoring...';
       errorBox.style.display = 'none';
@@ -465,16 +533,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-
         const data = await res.json();
-
-        if (!res.ok) {
-          showError(data.error || 'Inference failed.');
-          return;
-        }
-
+        if (!res.ok) { showError(data.error || 'Inference failed.'); return; }
         renderResult(data);
-
       } catch (err) {
         showError(`Could not reach API at ${API}. Is the Flask server running?`);
       } finally {
@@ -484,30 +545,72 @@
     }
 
     function renderResult(data) {
-      const { prediction, probability, threshold, feature_breakdown } = data;
+      const { prediction, probability, threshold, feature_breakdown, shap_breakdown } = data;
       const isHigh = prediction === 1;
       const pct = (probability * 100).toFixed(1);
-      const threshPct = (threshold * 100).toFixed(1);
 
-      // Verdict
-      const verdictEl = document.getElementById('verdictText');
-      const subEl = document.getElementById('verdictSub');
-      verdictEl.className = `verdict ${isHigh ? 'high' : 'low'}`;
-      verdictEl.textContent = isHigh ? 'HIGH RISK' : 'LOW RISK';
-      subEl.textContent = `Prediction: ${prediction}  ·  Threshold: ${threshold}`;
+      const vEl = document.getElementById('verdictText');
+      vEl.className = `cell-value ${isHigh ? 'high' : 'low'}`;
+      vEl.textContent = isHigh ? 'HIGH RISK' : 'LOW RISK';
+      document.getElementById('verdictSub').textContent = `Prediction: ${prediction}  ·  Threshold: ${threshold}`;
 
-      // Probability bar
-      document.getElementById('probLabel').textContent = `${pct}%`;
+      document.getElementById('probText').textContent = `${pct}%`;
+      document.getElementById('probSub').textContent = `Threshold at ${(threshold * 100).toFixed(0)}%`;
       const fill = document.getElementById('probFill');
       fill.className = `prob-bar-fill ${isHigh ? 'high' : 'low'}`;
       setTimeout(() => { fill.style.width = `${pct}%`; }, 50);
-
-      // Threshold marker
       const marker = document.getElementById('thresholdMarker');
-      marker.style.left = `${threshPct}%`;
-      marker.setAttribute('data-label', `threshold ${threshPct}%`);
+      marker.style.left = `${(threshold * 100).toFixed(1)}%`;
+      marker.setAttribute('data-label', `${(threshold * 100).toFixed(0)}%`);
 
-      // Feature breakdown
+      if (shap_breakdown && !shap_breakdown.error) renderShap(shap_breakdown);
+      renderBreakdown(feature_breakdown);
+
+      const resultEl = document.getElementById('result');
+      resultEl.style.display = 'block';
+      resultEl.style.animation = 'none';
+      void resultEl.offsetWidth;
+      resultEl.style.animation = 'fadeUp 0.4s ease both';
+    }
+
+    function renderShap(shap_breakdown) {
+      const grid = document.getElementById('shapGrid');
+      grid.innerHTML = '';
+
+      const entries = Object.entries(shap_breakdown);
+      const maxAbs = Math.max(...entries.map(([, v]) => Math.abs(v)));
+      entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+
+      entries.forEach(([feature, value], i) => {
+        const isPush = value >= 0;
+        const barPct = maxAbs > 0 ? (Math.abs(value) / maxAbs) * 46 : 0;
+        const barLeft = isPush ? '50%' : `${50 - barPct}%`;
+        const barWidth = `${barPct}%`;
+
+        const row = document.createElement('div');
+        row.className = 'shap-row';
+        row.innerHTML = `
+          <div class="shap-feature">${feature}</div>
+          <div class="shap-bar-wrap">
+            <div class="shap-bar ${isPush ? 'push' : 'pull'}"
+                 data-width="${barWidth}" data-left="${barLeft}"
+                 style="left:${barLeft}; width:0%;">
+            </div>
+          </div>
+          <div class="shap-val ${isPush ? 'push' : 'pull'}">${value >= 0 ? '+' : ''}${value.toFixed(4)}</div>
+        `;
+        grid.appendChild(row);
+
+        setTimeout(() => {
+          row.classList.add('visible');
+          const bar = row.querySelector('.shap-bar');
+          bar.style.width = bar.dataset.width;
+          bar.style.left = bar.dataset.left;
+        }, 100 + i * 70);
+      });
+    }
+
+    function renderBreakdown(feature_breakdown) {
       const grid = document.getElementById('breakdownGrid');
       grid.innerHTML = '';
       Object.entries(feature_breakdown).forEach(([key, info], i) => {
@@ -521,15 +624,8 @@
           <div class="breakdown-val">${formatVal(info.value)}</div>
         `;
         grid.appendChild(row);
-        setTimeout(() => row.classList.add('visible'), 80 + i * 60);
+        setTimeout(() => row.classList.add('visible'), 80 + i * 50);
       });
-
-      // Show result
-      const resultEl = document.getElementById('result');
-      resultEl.style.display = 'block';
-      resultEl.style.animation = 'none';
-      void resultEl.offsetWidth;
-      resultEl.style.animation = 'fadeUp 0.4s ease both';
     }
 
     function formatVal(val) {
@@ -548,8 +644,7 @@
     }
 
     function clearForm() {
-      ['AMT_ANNUITY','AMT_INCOME_TOTAL','AMT_CREDIT','AMT_GOODS_PRICE','EXT_SOURCE_1','EXT_SOURCE_2','EXT_SOURCE_3']
-        .forEach(f => document.getElementById(f).value = '');
+      FIELDS.forEach(f => document.getElementById(f).value = '');
       document.getElementById('result').style.display = 'none';
       document.getElementById('errorBox').style.display = 'none';
     }

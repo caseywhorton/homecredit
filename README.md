@@ -1,6 +1,6 @@
 # Loan Default Prediction
 
-A machine learning pipeline for predicting loan defaults using credit card balance data and application features. This project implements end-to-end MLOps practices including experiment tracking, data versioning, and reproducible model training.
+A machine learning pipeline for predicting loan defaults using application features. This project implements end-to-end MLOps practices including experiment tracking, data versioning, reproducible model training, and a method for inference.
 
 ## Table of Contents
 
@@ -9,6 +9,7 @@ A machine learning pipeline for predicting loan defaults using credit card balan
 - [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Inference](#inference)
 - [Configuration](#configuration)
 - [Model Performance](#model-performance)
 - [Development](#development)
@@ -31,6 +32,10 @@ The pipeline supports:
 - ✅ Data versioning with DVC
 - ✅ Reproducible training workflows
 
+The model can be used to produce inferences on loan default:
+
+<img src="img/inference_example_image.jpg" alt="Inference Example" width="500"/>
+
 ## Features
 
 ### Feature Engineering
@@ -42,7 +47,7 @@ The pipeline supports:
 
 ### Model Pipeline
 - Scikit-learn preprocessing pipeline with multiple transformers
-- Support for numeric, categorical, ordinal, and flag features
+- Support for experimenting with numeric, categorical, ordinal, and flag features
 - Stratified train/test splitting
 - Cross-validation for robust evaluation
 - Comprehensive metrics: AUC, F1, Precision, Recall
@@ -59,29 +64,30 @@ The pipeline supports:
 homecredit/
 │
 ├── home-credit-default-risk/
-│   ├── artifacts
-│       ├── preprocessor.pkl
-|       └── model_classifier.pkl
-│   ├── data
-│       ├── monitoring_id_set.csv
-│       ├── test_id_set.csv
-│       ├── train_id_set.csv
+│   ├── artifacts/
+│   │   ├── preprocessor.pkl
+│   │   ├── model_classifier.pkl
+│   │   ├── predictions.csv
+│   │   ├── roc_curve.png
+│   │   └── pr_curve.png
 │   ├── home-credit-default-risk/
-│       ├── application_test.csv
-|        ├── application_train.csv
-|        ├── credit_card_balance.csv
-|        └── ...
+│   │   ├── application_test.csv
+│   │   ├── application_train.csv
+│   │   ├── credit_card_balance.csv
+│   │   └── ...
 │   └── processed/
 │       └── .gitkeep
 │
 ├── scripts/
-│   └── train.py                 # Main training script
+│   ├── train.py                 # Main training script
+│   ├── inference.py             # Batch inference script
+│   ├── app.py                   # Flask REST API server
+│   └── index.html               # Browser scoring UI
 │
 ├── utils/
 │   ├── __init__.py
 │   ├── preprocessing.py         # Feature engineering and data prep
 │   └── model.py                 # Model creation and evaluation
-│
 │
 ├── mlruns/                      # MLflow experiment logs
 │
@@ -111,7 +117,7 @@ homecredit/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/loan-default-prediction.git
+   git clone https://github.com/caseywhorton/loan-default-prediction.git
    cd loan-default-prediction
    ```
 
@@ -123,7 +129,7 @@ homecredit/
 
 3. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements.txt # OR: pip3 install -r requirements.txt
    ```
 
 4. **Pull data with DVC** (if using DVC)
@@ -153,7 +159,8 @@ This will:
 2. Apply feature engineering based on `params.yaml` configuration
 3. Train the model with specified hyperparameters
 4. Log metrics and artifacts to MLflow
-5. Save the trained model to `artifacts/model_classifier.pkl`
+5. Save the trained preprocessing pipeline to `artifacts/preprocessor.pkl`
+6. Save the trained model to `artifacts/model_classifier.pkl`
 
 ### Viewing Results
 
@@ -166,6 +173,8 @@ Navigate to `http://localhost:5000` to compare experiments, view metrics, and an
 **Saved Artifacts:**
 - Trained model: `artifacts/model_classifier.pkl`
 - ROC curve: `artifacts/roc_curve.png`
+
+_**Note:** The saved artifacts in your local directory will be overwritten with each run, but the history of runs will be on MLflow._
 
 ### Making Predictions
 
@@ -185,44 +194,100 @@ predictions = model.predict(new_data)
 probabilities = model.predict_proba(new_data)[:, 1]
 ```
 
+## Inference
+
+The project supports two inference methods: batch predictions over a dataset, and a REST API for single-record scoring with a browser-based UI.
+
+### Batch Inference
+
+Run predictions over a full dataset and save results to a CSV file:
+
+```bash
+cd scripts
+python inference.py
+```
+
+This will:
+1. Load data from `data/inference/application_test.csv` and `data/inference/credit_card_balance.csv`
+2. Preprocess and engineer features using the same pipeline as training
+3. Load the trained model from `artifacts/model_classifier.pkl`
+4. Apply the optimal classification threshold from `params.yaml`
+5. Save predictions and probabilities to `artifacts/predictions.csv`
+
+Output columns:
+- All input features
+- `prediction` — binary default prediction (0 or 1)
+- `probability` — predicted default probability
+
+### REST API
+
+Start the Flask inference server:
+
+```bash
+cd scripts
+python app.py
+```
+
+The server runs at `http://localhost:5001`.
+
+#### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check, returns threshold and expected features |
+| GET | `/features` | Returns expected feature names and types |
+| POST | `/predict` | Run inference on a single record |
+
+#### Example Request
+
+```bash
+curl -X POST http://localhost:5001/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "AMT_ANNUITY": 24700.5,
+    "AMT_INCOME_TOTAL": 202500.0,
+    "AMT_CREDIT": 406597.5,
+    "AMT_GOODS_PRICE": 351000.0,
+    "EXT_SOURCE_1": 0.502,
+    "EXT_SOURCE_2": 0.655,
+    "EXT_SOURCE_3": 0.489
+  }'
+```
+
+#### Example Response
+
+```json
+{
+  "prediction": 0,
+  "probability": 0.0191,
+  "threshold": 0.42,
+  "feature_breakdown": {
+    "AMT_ANNUITY":      { "value": 24700.5, "type": "numeric" },
+    "EXT_SOURCE_2":     { "value": 0.655,   "type": "numeric" }
+  },
+  "shap_breakdown": {
+    "AMT_ANNUITY":       -0.0312,
+    "AMT_INCOME_TOTAL":  -0.0187,
+    "AMT_CREDIT":         0.0041,
+    "AMT_GOODS_PRICE":   -0.0098,
+    "EXT_SOURCE_1":      -0.1203,
+    "EXT_SOURCE_2":      -0.2341,
+    "EXT_SOURCE_3":      -0.1876
+  }
+}
+```
+
+Positive SHAP values push toward default, negative values push away from default.
+
+### Browser UI
+
+With the Flask server running, open `http://localhost:5001` in your browser to access the scoring interface. Enter applicant feature values and submit to receive a risk verdict, default probability, and an interactive SHAP waterfall chart showing each feature's contribution to the prediction.
+
+_**Note:** The Flask server is intended for local use and development. Do not expose it publicly without adding authentication and switching to a production WSGI server such as Gunicorn._
+
 ## Configuration
 
-Model training is controlled via `params.yaml`:
-
-```yaml
-experiment_name: "loan_default_experiment"
-
-features:
-  numeric:
-    - AMT_INCOME_TOTAL
-    - AMT_CREDIT
-    - UTILIZATION
-  categorical:
-    - NAME_CONTRACT_TYPE
-    - CODE_GENDER
-  ordinal:
-    - OCCUPATION_TYPE
-  flag:
-    - FLAG_OWN_CAR
-    - FLAG_OWN_REALTY
-
-model:
-  n_estimators: 200
-  max_depth: 15
-  min_samples_split: 5
-  min_samples_leaf: 2
-  random_state: 42
-
-train:
-  test_size: 0.20
-  random_state: 101
-  cv_folds: 5
-
-filepath:
-  source_data: "data/raw/application_train.csv"
-  source_data_cc: "data/raw/credit_card_balance.csv"
-  model_artifact_dir: "artifacts"
-```
+Model training is controlled via `params.yaml`.
 
 ### Adding New Features
 
@@ -313,11 +378,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-**Your Name**  
-Email: your.email@example.com  
-LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)  
-GitHub: [@yourusername](https://github.com/yourusername)
+**Casey Whorton**
+LinkedIn: [Casey Whorton](https://www.linkedin.com/in/caseywhorton/)
+GitHub: [@yourusername](https://github.com/caseywhorton)
 
 ---
 
-*Last updated: [Date]*
+*Last updated: [April 21, 2026]*
