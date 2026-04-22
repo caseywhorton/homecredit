@@ -431,6 +431,11 @@ dvc push
 
 _**Note:** Always run `dvc push` from the project root, not from a subdirectory._
 
+The pipeline for the data and corresponding artifacts is a very simple, traditional flow.  
+
+<img src="img/dagshub_pipeline.jpg" alt="Dagshub Pipeline" width="500"/>
+
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
