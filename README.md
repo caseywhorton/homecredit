@@ -297,25 +297,54 @@ Model training is controlled via `params.yaml`.
 
 ## Model Performance
 
+**ROC Curve Artifacts**  
+
+For each training run, the ROC curve is saved to ML Flow.  
+
+<img src="img/roc_curve_example.jpg" alt="ROC Curve" width="500"/>
+
+
+ **Precision Recall Curve Artifacts**
+
+ For each training run, the Precision-Recall curve is saved to ML Flow.  
+
+ Additionally, I show the maximum F1 score for different precision and recalls.
+
+<img src="img/pr_curve_example.jpg" alt="Precision Recall Curve" width="500"/>
+
+
 ### Current Results
 
 | Metric | Train | Test |
 |--------|-------|------|
-| AUC | 0.XXX | 0.XXX |
-| F1 Score | 0.XXX | 0.XXX |
-| Precision | 0.XXX | 0.XXX |
-| Recall | 0.XXX | 0.XXX |
+| AUC | 0.75 | 0.74 |
+| F1 Score | 0.02 | 0.01 |
+| Precision | 0.70 | 0.47 |
+| Recall | 0.01 | 0.01 |
 
-*Update these values with your actual model performance*
+*These values are not great.*
 
 ### Feature Importance
 
-Top 10 most important features:
-1. [Feature name] - [Importance score]
-2. [Feature name] - [Importance score]
-3. ...
+The beeswarm plot below shows how each feature impacts the model's predictions. Each dot represents one observation. The x-axis shows the SHAP value — positive values push toward default, negative values push away. Color indicates the feature value: red = high, blue = low.
 
-*Add SHAP plots or feature importance visualizations*
+**Key takeaways:**
+- `EXT_SOURCE_2` and `EXT_SOURCE_3` are the most influential features — low scores strongly push toward default
+- `EXT_SOURCE_1` follows the same pattern but with less impact
+- `AMT_INCOME_TOTAL` and `AMT_ANNUITY` contribute very little to individual predictions
+
+<img src="img/shap_example.jpg" alt="Shapley Value Plot" width="500"/>
+  
+The bar chart below shows mean absolute SHAP values for each feature.
+
+**Key takeaways:**
+- `EXT_SOURCE_3` and `EXT_SOURCE_2` are nearly equal in importance and dominate the other features
+- `AMT_GOODS_PRICE` and `EXT_SOURCE_1` are mid-tier contributors
+- `AMT_INCOME_TOTAL` has minimal impact — roughly 10x less influential than the top features
+
+  
+<img src="img/shap_bar_example.jpg" alt="Shapley Value Bar Plot" width="500"/>
+
 
 ## Development
 
@@ -356,6 +385,52 @@ mlflow ui
 # Navigate to http://localhost:5000
 ```
 
+### Artifact Tracking with DVC
+
+## Data & Artifact Versioning
+
+This project uses DVC to version and store trained model artifacts. All artifacts are tracked under the `artifacts/` directory and pushed to a remote storage backend (Google Drive).
+
+### Tracked Artifacts
+
+| File | Description |
+|------|-------------|
+| `artifacts/model_classifier.pkl` | Trained LightGBM classification pipeline |
+| `artifacts/preprocessor.pkl` | Trained data preprocessing pipeline |
+
+### Checking Status
+
+To see which artifacts have changed since the last push:
+```bash
+dvc status
+```
+
+### Pushing Artifacts
+
+After training, push updated artifacts to the remote:
+```bash
+dvc push
+```
+
+### Pulling Artifacts
+
+To restore artifacts on a new machine or after cloning the repo:
+```bash
+dvc pull
+```
+
+### Adding a New Artifact
+
+If you add a new file to `artifacts/` that should be tracked:
+```bash
+dvc add artifacts/<filename>
+git add artifacts/<filename>.dvc .gitignore
+git commit -m "track <filename> with DVC"
+dvc push
+```
+
+_**Note:** Always run `dvc push` from the project root, not from a subdirectory._
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -378,9 +453,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-**Casey Whorton**
-LinkedIn: [Casey Whorton](https://www.linkedin.com/in/caseywhorton/)
-GitHub: [@yourusername](https://github.com/caseywhorton)
+**Casey Whorton**  
+LinkedIn: [Casey Whorton](https://www.linkedin.com/in/caseywhorton/)  
+GitHub: [@caseywhorton](https://github.com/caseywhorton)  
 
 ---
 

@@ -9,6 +9,7 @@ import json
 import os
 import sys
 from pathlib import Path
+import shap
 
 import mlflow
 import mlflow.sklearn
@@ -22,6 +23,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 import warnings
+import matplotlib.pyplot as plt
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
@@ -84,7 +86,6 @@ def train_with_mlflow(
     Returns:
         Trained model object
     """
-    # Set experiment before starting run
     mlflow.set_experiment(experiment_name)
 
     with mlflow.start_run():
@@ -102,10 +103,7 @@ def train_with_mlflow(
             if numeric_features:
                 mlflow.log_param("numeric_features", ",".join(numeric_features))
             if categorical_features:
-                mlflow.log_param(
-                    "categorical_features",
-                    ",".join(categorical_features),
-                )
+                mlflow.log_param("categorical_features", ",".join(categorical_features))
             if ordinal_features:
                 mlflow.log_param("ordinal_features", ",".join(ordinal_features))
             if flag_features:
@@ -139,7 +137,6 @@ def train_with_mlflow(
             model = create_model(preprocessor, algorithm="lightgbm", **model_params)
 
             print("Fitting final model on full training set...")
-
             model.fit(X_train, y_train)
 
             # Make predictions
@@ -188,6 +185,10 @@ def train_with_mlflow(
                 y_test, y_test_proba, optimal_threshold, threshold_df
             )
 
+            # Create and log SHAP feature importance
+            print("Creating SHAP feature importance plot...")
+            _create_and_log_shap_importance(model, X_train)
+
             # Log model to MLflow
             print("Logging model to MLflow...")
             mlflow.sklearn.log_model(model, "model")
@@ -201,13 +202,78 @@ def train_with_mlflow(
 
             print(f"Model saved to: {model_path}")
             print("MLflow run logged successfully")
-            print(f"Train AUC: {train_auc:.3f}, " f"Test AUC: {test_auc:.3f}")
+            print(f"Train AUC: {train_auc:.3f}, Test AUC: {test_auc:.3f}")
 
         except Exception as e:
             print(f"Error in training process: {e}")
             raise
 
     return model
+
+
+def _create_and_log_shap_importance(model, X_train):
+    """
+    Compute global SHAP feature importance and log plots to MLflow.
+
+    Samples up to 1000 rows from the training set for performance.
+    Logs both a summary (beeswarm) plot and a bar chart.
+
+    Args:
+        model: Trained sklearn pipeline with preprocessor and classifier steps
+        X_train: Training feature matrix (pre-transformation)
+    """
+    import shap
+
+    # Sample training data for performance on large datasets
+    sample_size = min(1000, len(X_train))
+    X_sample = X_train.sample(sample_size, random_state=42)
+
+    # Transform using the fitted preprocessor step
+    X_transformed = model.named_steps["preprocessor"].transform(X_sample)
+
+    # Compute SHAP values using the classifier step
+    explainer = shap.TreeExplainer(model.named_steps["classifier"])
+    shap_values = explainer.shap_values(X_transformed)
+
+    # For binary classification, shap_values may be a list — take positive class
+    if isinstance(shap_values, list):
+        sv = shap_values[1]
+    else:
+        sv = shap_values
+
+    # Collect all feature names across all feature type lists
+    all_features = (
+        (numeric_features or [])
+        + (categorical_features or [])
+        + (ordinal_features or [])
+        + (flag_features or [])
+    )
+
+    artifacts_dir = Path(__file__).parent.parent / "artifacts"
+
+    # --- Plot 1: Summary (beeswarm) ---
+    shap.summary_plot(sv, X_transformed, feature_names=all_features, show=False)
+    plt.tight_layout()
+    summary_path = str(artifacts_dir / "shap_summary.png")
+    plt.savefig(summary_path, bbox_inches="tight")
+    mlflow.log_artifact(summary_path)
+    plt.close()
+
+    # --- Plot 2: Bar chart (mean absolute SHAP) ---
+    shap.summary_plot(
+        sv,
+        X_transformed,
+        feature_names=all_features,
+        plot_type="bar",
+        show=False,
+    )
+    plt.tight_layout()
+    bar_path = str(artifacts_dir / "shap_bar.png")
+    plt.savefig(bar_path, bbox_inches="tight")
+    mlflow.log_artifact(bar_path)
+    plt.close()
+
+    print("SHAP importance plots logged to MLflow")
 
 
 # =============================================================================
